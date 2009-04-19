@@ -3,11 +3,12 @@
  * and open the template in the editor.
  */
 
-package org.cs533.processor;
+package org.cs533.newprocessor.components.memorysubsystem;
 
 /**
  *
- * @author Vivek
+ * @author amit
  */
-public class Instruction {
+public class MainMemory {
+
 }
