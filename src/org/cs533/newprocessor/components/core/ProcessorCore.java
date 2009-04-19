@@ -4,14 +4,39 @@
  */
 package org.cs533.newprocessor.components.core;
 
+import org.cs533.newprocessor.ComponentInterface;
+import org.cs533.newprocessor.components.core.pipeline.Pipeline;
 import org.cs533.newprocessor.components.memorysubsystem.L1Cache;
 
 /**
  *
  * @author amit
  */
-public class ProcessorCore {
+public class ProcessorCore implements ComponentInterface {
 
+    public static final int LATENCY = 1;
+    public int startPC;
+    public int endPC;
     L1Cache lCache;
-    
+    Pipeline p;
+
+    public ProcessorCore(int _startPC, int _endPC) {
+        startPC = _startPC;
+        endPC = _endPC;
+        lCache = new L1Cache();
+        p = new Pipeline();
+    }
+
+    public void runPrep() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public void runClock() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    public int getLatency() {
+        return LATENCY;
+    }
+
 }
