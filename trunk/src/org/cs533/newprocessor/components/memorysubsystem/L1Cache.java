@@ -6,6 +6,7 @@ package org.cs533.newprocessor.components.memorysubsystem;
 
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.components.bus.CacheCoherenceBus;
+import org.cs533.newprocessor.components.core.ProcessorCore;
 
 /**
  *
@@ -13,7 +14,13 @@ import org.cs533.newprocessor.components.bus.CacheCoherenceBus;
  */
 public class L1Cache implements ComponentInterface {
 
-    public L1Cache(CacheCoherenceBus bus) {
+    ProcessorCore core;
+    CacheCoherenceBus bus;
+    public static final int LATENCY = 1;
+
+    public L1Cache(ProcessorCore _core, CacheCoherenceBus _bus) {
+        bus = _bus;
+        core = _core;
         bus.registerCache(this);
     }
 
@@ -26,6 +33,6 @@ public class L1Cache implements ComponentInterface {
     }
 
     public int getLatency() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return LATENCY;
     }
 }
