@@ -12,25 +12,23 @@ import org.cs533.newprocessor.components.memorysubsystem.CacheLine;
  */
 public class L1CacheLine extends CacheLine {
 
-    public boolean isDirty;
-    public int currentState;
+    public enum L1LineStates {
 
-    public L1CacheLine(byte[] data, boolean isDirty, int state) {
+        Valid, Dirty_Valid, Invalid,INVALIDATE_AFTER_WRITE_BACK
+    }
+    public L1LineStates currentState;
+
+    public L1CacheLine(byte[] data, boolean isDirty, L1LineStates state) {
         this.data = data;
-        this.isDirty = isDirty;
         currentState = state;
     }
 
-    public void setCurrentState(int currentState) {
-        this.currentState = currentState;
+    public void setCurrentState(L1LineStates state) {
+        currentState = state;
     }
 
-    public int getCurrentState() {
+    public L1LineStates getCurrentState() {
         return currentState;
-    }
-
-    public boolean isIsDirty() {
-        return isDirty;
     }
 
     public byte[] getData() {
@@ -39,9 +37,5 @@ public class L1CacheLine extends CacheLine {
 
     public void setData(byte[] data) {
         this.data = data;
-    }
-
-    public void setIsDirty(boolean isDirty) {
-        this.isDirty = isDirty;
     }
 }

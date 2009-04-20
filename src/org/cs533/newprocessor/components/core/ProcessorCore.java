@@ -24,7 +24,7 @@ public class ProcessorCore implements ComponentInterface {
     public ProcessorCore(int _startPC, int _endPC,CacheCoherenceBus bus) {
         startPC = _startPC;
         endPC = _endPC;
-        lCache = new L1Cache(this,bus);
+    //    lCache = new L1Cache(this,bus);
         p = new Pipeline();
     }
 

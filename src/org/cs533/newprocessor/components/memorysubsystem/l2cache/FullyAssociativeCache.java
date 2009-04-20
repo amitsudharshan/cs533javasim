@@ -167,7 +167,7 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
      */
     public boolean runL2Read() {
         Logger.getAnonymousLogger().info("In runL2Read");
-        L2CacheLine line = (L2CacheLine) l2CacheStore.get(toDo.getInAddress());
+        L2CacheLine line =  l2CacheStore.get(toDo.getInAddress());
         Logger.getAnonymousLogger().info("in runL2Read pulled cache line = " + line);
         if (line != null) {
             Logger.getAnonymousLogger().info("in runL2Read since line != null we are returning true");
