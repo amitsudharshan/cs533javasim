@@ -5,6 +5,7 @@
 package org.cs533.newprocessor.components.core;
 
 import org.cs533.newprocessor.ComponentInterface;
+import org.cs533.newprocessor.components.bus.CacheCoherenceBus;
 import org.cs533.newprocessor.components.core.pipeline.Pipeline;
 import org.cs533.newprocessor.components.memorysubsystem.L1Cache;
 
@@ -20,10 +21,10 @@ public class ProcessorCore implements ComponentInterface {
     L1Cache lCache;
     Pipeline p;
 
-    public ProcessorCore(int _startPC, int _endPC) {
+    public ProcessorCore(int _startPC, int _endPC,CacheCoherenceBus bus) {
         startPC = _startPC;
         endPC = _endPC;
-        lCache = new L1Cache();
+        lCache = new L1Cache(this,bus);
         p = new Pipeline();
     }
 
