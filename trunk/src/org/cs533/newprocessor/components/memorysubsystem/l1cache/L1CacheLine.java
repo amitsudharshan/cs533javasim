@@ -4,15 +4,14 @@
  */
 package org.cs533.newprocessor.components.memorysubsystem.l1cache;
 
-import org.cs533.newprocessor.components.memorysubsystem.l1cache.protocols.AbstractProtocol;
+import org.cs533.newprocessor.components.memorysubsystem.CacheLine;
 
 /**
  *
  * @author amit
  */
-public class L1CacheLine {
+public class L1CacheLine extends CacheLine {
 
-    public byte[] data;
     public boolean isDirty;
     public int currentState;
 
