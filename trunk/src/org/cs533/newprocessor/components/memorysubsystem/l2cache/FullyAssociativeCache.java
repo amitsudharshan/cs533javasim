@@ -2,8 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.cs533.newprocessor.components.memorysubsystem;
+package org.cs533.newprocessor.components.memorysubsystem.l2cache;
 
+import org.cs533.newprocessor.components.memorysubsystem.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 import org.cs533.newprocessor.ComponentInterface;
@@ -14,9 +15,9 @@ import org.cs533.newprocessor.simulator.Simulator;
  *
  * @author amit
  */
-public class FullyAssociativeCache implements ComponentInterface {
+public class FullyAssociativeCache implements ComponentInterface,MemoryInterface {
 
-    MainMemory mainMemory;
+    MemoryInterface parentMem;
     public static int LATENCY = Globals.L2_CACHE_LATENCY; // MADE UP VALUE HERE
     LinkedBlockingQueue<MemoryInstruction> queue = new LinkedBlockingQueue<MemoryInstruction>();
 
@@ -34,14 +35,14 @@ public class FullyAssociativeCache implements ComponentInterface {
         queue.add(instr);
     }
 
-    public FullyAssociativeCache(MainMemory _mainMemory) {
-        mainMemory = _mainMemory;
+    public FullyAssociativeCache(MemoryInterface memInterface_) {
+        parentMem = memInterface_;
         l2CacheStore = new L2CacheBackingStore(size);
         Simulator.registerComponent(this);
     }
 
-    public FullyAssociativeCache(int sizeInLines, int latency, MainMemory _mainMemory) {
-        mainMemory = _mainMemory;
+    public FullyAssociativeCache(int sizeInLines, int latency, MemoryInterface memInterface_) {
+        parentMem = memInterface_;
         size = sizeInLines;
         LATENCY = latency;
         l2CacheStore = new L2CacheBackingStore(size);
@@ -98,7 +99,7 @@ public class FullyAssociativeCache implements ComponentInterface {
                     Logger.getAnonymousLogger().info("got back true in runL2Write");
                     isProcessing = false;
                 }
-                toDo.isCompleted = true;
+                toDo.setIsCompleted(true);
 
                 Logger.getAnonymousLogger().info(" set toDo.isCompleted to  " + toDo.getIsCompleted());
             } else if (!toDo.isIsWriteInstruction()) {
@@ -107,9 +108,9 @@ public class FullyAssociativeCache implements ComponentInterface {
                 boolean runMainMemoryRead = !runL2Read();
                 if (runMainMemoryRead) {
                     memoryReadInstruction = new MemoryInstruction(toDo.getInAddress(), toDo.getInData(), false);
-                    mainMemory.setMemoryInstruction(memoryReadInstruction);
+                    parentMem.setMemoryInstruction(memoryReadInstruction);
                 } else {
-                    toDo.isCompleted = true;
+                    toDo.setIsCompleted(true);
                     isProcessing = false;
                 }
             }
@@ -124,7 +125,7 @@ public class FullyAssociativeCache implements ComponentInterface {
      * @return false if we have evicted on the store or true if we did not
      */
     public boolean handleCacheReadMiss() {
-        l2CacheStore.put(memoryReadInstruction.getInAddress(), new CacheLine(memoryReadInstruction.getOutData(), false));
+        l2CacheStore.put(memoryReadInstruction.getInAddress(), new L2CacheLine(memoryReadInstruction.getOutData(), false));
         if (l2CacheStore.address != -1 && l2CacheStore.line.isIsDirty()) {
             handleEviction();
             return false;
@@ -139,7 +140,7 @@ public class FullyAssociativeCache implements ComponentInterface {
         evictInstruction =
                 new MemoryInstruction(l2CacheStore.address, l2CacheStore.line.getData(), true);
         l2CacheStore.resetRemoved();
-        mainMemory.setMemoryInstruction(evictInstruction);
+        parentMem.setMemoryInstruction(evictInstruction);
     }
 
     /**
@@ -148,7 +149,7 @@ public class FullyAssociativeCache implements ComponentInterface {
      * or true if we succesfully wrote in with no need to evict
      */
     public boolean runL2Write() {
-        CacheLine line = new CacheLine(toDo.getInData(), true);
+        L2CacheLine line = new L2CacheLine(toDo.getInData(), true);
         Logger.getAnonymousLogger().info("The value of getInAddress is " + toDo.getInAddress());
         l2CacheStore.put(toDo.getInAddress(), line);
         if (l2CacheStore.address != -1 && l2CacheStore.line.isIsDirty()) {
@@ -165,7 +166,7 @@ public class FullyAssociativeCache implements ComponentInterface {
      */
     public boolean runL2Read() {
         Logger.getAnonymousLogger().info("In runL2Read");
-        CacheLine line = (CacheLine) l2CacheStore.get(toDo.getInAddress());
+        L2CacheLine line = (L2CacheLine) l2CacheStore.get(toDo.getInAddress());
         Logger.getAnonymousLogger().info("in runL2Read pulled cache line = " + line);
         if (line != null) {
             Logger.getAnonymousLogger().info("in runL2Read since line != null we are returning true");

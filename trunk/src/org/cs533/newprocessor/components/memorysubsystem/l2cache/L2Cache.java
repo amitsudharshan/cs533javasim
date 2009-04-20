@@ -2,8 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.cs533.newprocessor.components.memorysubsystem;
+package org.cs533.newprocessor.components.memorysubsystem.l2cache;
 
+import org.cs533.newprocessor.components.memorysubsystem.*;
 import org.cs533.newprocessor.Globals;
 
 /**

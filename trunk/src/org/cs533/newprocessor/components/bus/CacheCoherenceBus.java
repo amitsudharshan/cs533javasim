@@ -6,8 +6,8 @@ package org.cs533.newprocessor.components.bus;
 
 import java.util.ArrayList;
 import org.cs533.newprocessor.ComponentInterface;
-import org.cs533.newprocessor.components.memorysubsystem.L1Cache;
-import org.cs533.newprocessor.components.memorysubsystem.FullyAssociativeCache;
+import org.cs533.newprocessor.components.memorysubsystem.l1cache.L1Cache;
+import org.cs533.newprocessor.components.memorysubsystem.l2cache.FullyAssociativeCache;
 
 /**
  *

@@ -13,7 +13,7 @@ import org.cs533.newprocessor.simulator.Simulator;
  *
  * @author amit
  */
-public class MainMemory implements ComponentInterface {
+public class MainMemory implements ComponentInterface,MemoryInterface {
 
     public static final int LATENCY = Globals.MAIN_MEMORY_LATENCY; // MADE UP VALUE HERE
     /* input port */
