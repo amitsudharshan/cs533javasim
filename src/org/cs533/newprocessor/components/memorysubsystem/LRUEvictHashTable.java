@@ -13,10 +13,10 @@ import org.cs533.newprocessor.Globals;
  *
  * @author amit
  */
-public class LRUEvictHashTable extends LinkedHashMap {
+public class LRUEvictHashTable<T extends CacheLine> extends LinkedHashMap {
 
     public Integer address = -1;
-    public L2CacheLine line = null;
+    public T line = null;
     int size = Globals.L2_SIZE_IN_NUMBER_OF_LINES;
 
     public LRUEvictHashTable(int size_) {
@@ -28,7 +28,7 @@ public class LRUEvictHashTable extends LinkedHashMap {
     protected boolean removeEldestEntry(Map.Entry entry) {
         if (size() > size) {
             address = (Integer) entry.getKey();
-            line = (L2CacheLine) entry.getValue();
+            line = (T) entry.getValue();
             return true;
         } else {
             return false;

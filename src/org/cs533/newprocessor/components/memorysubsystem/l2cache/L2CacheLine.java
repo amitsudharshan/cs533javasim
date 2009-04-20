@@ -4,13 +4,14 @@
  */
 package org.cs533.newprocessor.components.memorysubsystem.l2cache;
 
+import org.cs533.newprocessor.components.memorysubsystem.CacheLine;
+
 /**
  *
  * @author amit
  */
-public class L2CacheLine {
+public class L2CacheLine extends CacheLine{
 
-    public byte[] data;
     public boolean isDirty;
 
     public L2CacheLine(byte[] data, boolean isDirty) {

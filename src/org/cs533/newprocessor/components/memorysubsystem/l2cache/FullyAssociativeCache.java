@@ -24,7 +24,7 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
 
     /* internal state */
     int size = Globals.L2_SIZE_IN_NUMBER_OF_LINES;
-    LRUEvictHashTable l2CacheStore = null;
+    LRUEvictHashTable<L2CacheLine> l2CacheStore = null;
     MemoryInstruction toDo;
     boolean isProcessing = false;
     MemoryInstruction evictInstruction = null;
@@ -38,7 +38,7 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
 
     public FullyAssociativeCache(MemoryInterface memInterface_) {
         parentMem = memInterface_;
-        l2CacheStore = new LRUEvictHashTable(size);
+        l2CacheStore = new LRUEvictHashTable<L2CacheLine>(size);
         Simulator.registerComponent(this);
     }
 
@@ -46,7 +46,7 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
         parentMem = memInterface_;
         size = sizeInLines;
         LATENCY = latency;
-        l2CacheStore = new LRUEvictHashTable(size);
+        l2CacheStore = new LRUEvictHashTable<L2CacheLine>(size);
         Simulator.registerComponent(this);
     }
 
