@@ -7,7 +7,7 @@ package org.cs533.newprocessor.components.bus;
 import java.util.ArrayList;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.components.memorysubsystem.L1Cache;
-import org.cs533.newprocessor.components.memorysubsystem.L2Cache;
+import org.cs533.newprocessor.components.memorysubsystem.FullyAssociativeCache;
 
 /**
  *
@@ -16,7 +16,7 @@ import org.cs533.newprocessor.components.memorysubsystem.L2Cache;
 public class CacheCoherenceBus implements ComponentInterface {
 
     ArrayList<L1Cache> l1Caches;
-    L2Cache l2Cache;
+    FullyAssociativeCache l2Cache;
     public static final int LATENCY = 25; //FROM Veenstra/Fowler May 1992
 
     public void registerCache(L1Cache l1Cache) {
