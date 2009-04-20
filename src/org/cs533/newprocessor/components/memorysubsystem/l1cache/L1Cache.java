@@ -5,8 +5,10 @@
 package org.cs533.newprocessor.components.memorysubsystem.l1cache;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Vector;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 import org.cs533.newprocessor.components.memorysubsystem.*;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
@@ -14,6 +16,7 @@ import org.cs533.newprocessor.components.bus.CacheCoherenceBus.BusMessage;
 import org.cs533.newprocessor.components.bus.CacheCoherenceBus.MessageTypes;
 import org.cs533.newprocessor.components.bus.CacheCoherenceBus.ResponseTypes;
 import org.cs533.newprocessor.components.memorysubsystem.l1cache.L1CacheLine.L1LineStates;
+import org.cs533.newprocessor.components.memorysubsystem.l2cache.L2CacheLine;
 
 /**
  *
@@ -103,7 +106,15 @@ public class L1Cache implements ComponentInterface, MemoryInterface {
     }
 
     public void checkWriteBackMessagePairs() {
-     //   for(WriteBackMessagePairs pair: )
+        Iterator<WriteBackMessagePair> pairs = writeBackPairs.iterator();
+        while (pairs.hasNext()) {
+            WriteBackMessagePair pair = pairs.next();
+            if (pair.toWriteBack.getIsCompleted()) {
+                pair.message.response = ResponseTypes.ACK_GET_FROM_MEMORY;
+                outMessageQueue.add(pair.message);
+                pairs.remove();
+            }
+        }
     }
 
     public void processMessages() {
@@ -120,8 +131,10 @@ public class L1Cache implements ComponentInterface, MemoryInterface {
                     if (line.getCurrentState() == L1LineStates.Dirty_Valid) {
                         // WE NEED TO WRITE-BACK and invalidate the line.
                         // Once this is confirmed then we can ack the message.
+                        // We force this instruction to execute as the next
+                        // Memory Instruction
                         MemoryInstruction memToDo = new MemoryInstruction(normAdd, line.getData(), true);
-                        instructionsToDo.add(0, memToDo);
+                        instructionsToDo.add(0, memToDo); // we force this to the head of the l/s queue
                         writeBackPairs.add(new WriteBackMessagePair(memToDo, message));
                         line.setCurrentState(L1LineStates.INVALIDATE_AFTER_WRITE_BACK);
                     } else {
@@ -141,6 +154,133 @@ public class L1Cache implements ComponentInterface, MemoryInterface {
     }
 
     public void runMemoryTransaction() {
+        if (isProcessing && waitCycles >= LATENCY) {
+            // When we are here we have waited for at least the latency of the L2 cache
+            if (evictInstruction != null) {
+                if (evictInstruction.getIsCompleted()) {
+                    // If we are here, we have an evict instruction we are waiting for...
+                    Logger.getAnonymousLogger().info("Running evict instruction with cycle = " + waitCycles);
+                    evictInstruction = null;
+                    isProcessing = false;
+                } else {
+                    Logger.getAnonymousLogger().info("Still waiting for memory to come back with cycles = " + waitCycles);
+                }
+            } else if (memoryReadInstruction != null) {
+                if (memoryReadInstruction.getIsCompleted() && readMissCounter++ >= LATENCY) {
+                    // if we are here we are waiting to get back data from a cache read miss.
+                    Logger.getAnonymousLogger().info("Running readMiss instrcution with waitCycles = " + waitCycles + " and readMissCounter = " + readMissCounter);
+                    boolean notEvicted = handleCacheReadMiss();
+                    if (notEvicted) {
+                        isProcessing = false;
+                    }
+                    toDo.setOutData(memoryReadInstruction.getOutData());
+                    toDo.setIsCompleted(true);
+                    memoryReadInstruction = null;
+                }
+            } else if (toDo.isIsWriteInstruction()) {
+                Logger.getAnonymousLogger().info("In write instruction");
+                // this is the entry point for a write
+                if (!runL2Write()) { //we have an eviction
+                    Logger.getAnonymousLogger().info("exexcuted runL2Write, now got back false, so executing eviction");
+                    handleEviction();
+                } else {
+                    Logger.getAnonymousLogger().info("got back true in runL2Write");
+                    isProcessing = false;
+                }
+                toDo.setIsCompleted(true);
+
+                Logger.getAnonymousLogger().info(" set toDo.isCompleted to  " + toDo.getIsCompleted());
+            } else if (!toDo.isIsWriteInstruction()) {
+                Logger.getAnonymousLogger().info("In read instruction");
+                // this is the entry point for a read.
+                boolean runMainMemoryRead = !runL2Read();
+                if (runMainMemoryRead) {
+                    memoryReadInstruction = new MemoryInstruction(toDo.getInAddress(), toDo.getInData(), false);
+                    parentMem.setMemoryInstruction(memoryReadInstruction);
+                } else {
+                    toDo.setIsCompleted(true);
+                    isProcessing = false;
+                }
+            }
+        } else {
+            Logger.getAnonymousLogger().info("fell through if statement with waitCycles =  " + waitCycles + " and readMissCounter = " + readMissCounter);
+        }
+        waitCycles++;
+    }
+
+    /**
+     *
+     * @return false if we have evicted on the store or true if we did not
+     */
+    public boolean handleCacheReadMiss() {
+        l2CacheStore.put(memoryReadInstruction.getInAddress(), new L2CacheLine(memoryReadInstruction.getOutData(), false));
+        if (l2CacheStore.address != -1 && l2CacheStore.line.isIsDirty()) {
+            handleEviction();
+            return false;
+        } else {
+            return true;
+        }
+
+    }
+
+    public void handleEviction() {
+        Logger.getAnonymousLogger().info("running eviction in L2");
+        evictInstruction =
+                new MemoryInstruction(l2CacheStore.address, l2CacheStore.line.getData(), true);
+        l2CacheStore.resetRemoved();
+        parentMem.setMemoryInstruction(evictInstruction);
+    }
+
+    /**
+     *
+     * @return first index is true if write hit/false if not. second index
+     * is true if eviction and false if not
+     */
+    public boolean[] runL1Write() {
+        int normAdd = computeNormalizedAddress(toDo.getInAddress());
+        int offsetAddress = normAdd + (toDo.getInAddress() - normAdd);
+        boolean[] toReturn = new boolean[]{false, true}; // default to write miss and no eviction
+        if (offsetAddress % 2 != 0) {
+            offsetAddress--;
+        }
+        L1CacheLine line = l1BackingStore.get(normAdd);
+        if (line == null) {
+            //write miss
+            toReturn[0] = false; //write miss
+        } else if (line.validForWrite()) {
+            // We write the word into the line then store the line.
+            line.getData()[offsetAddress] = toDo.getInData()[0];
+            line.getData()[offsetAddress + 1] = toDo.getInData()[1];
+            line.setCurrentState(L1LineStates.Dirty_Valid);
+            toReturn[0] = true; // write hit.
+            l1BackingStore.put(toDo.getInAddress(), line);
+            if (l1BackingStore.address != -1 && l1BackingStore.line.getCurrentState() == L1LineStates.Dirty_Valid) {
+                toReturn[1] = true; // we need to evict
+            } 
+        }
+        Logger.getAnonymousLogger().info("The value of getInAddress is " + toDo.getInAddress() + " and of offset address is " + offsetAddress);
+        return toReturn;
+
+    }
+
+    /**
+     *
+     * @return true if we have a cache hit and false if we have a miss
+     */
+    public boolean runL1Read() {
+        Logger.getAnonymousLogger().info("In runL2Read");
+        L1CacheLine line = l1BackingStore.get(toDo.getInAddress());
+        Logger.getAnonymousLogger().info("in runL2Read pulled cache line = " + line);
+        if (line != null && line.validForRead()) {
+            //read hit
+            Logger.getAnonymousLogger().info("in runL2Read since line != null we are returning true");
+            toDo.setOutData(line.getData());
+            return true;
+        } else {
+            Logger.getAnonymousLogger().info("in runL2Read we are returning false");
+            return false;
+        }
+
     }
 
     public int getLatency() {
