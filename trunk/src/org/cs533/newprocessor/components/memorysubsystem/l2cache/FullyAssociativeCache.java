@@ -4,6 +4,7 @@
  */
 package org.cs533.newprocessor.components.memorysubsystem.l2cache;
 
+import org.cs533.newprocessor.components.memorysubsystem.LRUEvictHashTable;
 import org.cs533.newprocessor.components.memorysubsystem.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
@@ -23,7 +24,7 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
 
     /* internal state */
     int size = Globals.L2_SIZE_IN_NUMBER_OF_LINES;
-    L2CacheBackingStore l2CacheStore = null;
+    LRUEvictHashTable l2CacheStore = null;
     MemoryInstruction toDo;
     boolean isProcessing = false;
     MemoryInstruction evictInstruction = null;
@@ -37,7 +38,7 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
 
     public FullyAssociativeCache(MemoryInterface memInterface_) {
         parentMem = memInterface_;
-        l2CacheStore = new L2CacheBackingStore(size);
+        l2CacheStore = new LRUEvictHashTable(size);
         Simulator.registerComponent(this);
     }
 
@@ -45,7 +46,7 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
         parentMem = memInterface_;
         size = sizeInLines;
         LATENCY = latency;
-        l2CacheStore = new L2CacheBackingStore(size);
+        l2CacheStore = new LRUEvictHashTable(size);
         Simulator.registerComponent(this);
     }
 
