@@ -13,7 +13,7 @@ import org.cs533.newprocessor.Globals;
  *
  * @author amit
  */
-public class LRUEvictHashTable<T extends CacheLine> extends LinkedHashMap {
+public class LRUEvictHashTable<T extends CacheLine> extends LinkedHashMap<Integer,T> {
 
     public Integer address = -1;
     public T line = null;

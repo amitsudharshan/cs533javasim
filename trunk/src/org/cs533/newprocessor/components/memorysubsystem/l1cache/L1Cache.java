@@ -5,17 +5,40 @@
 package org.cs533.newprocessor.components.memorysubsystem.l1cache;
 
 import java.util.ArrayList;
+import java.util.Vector;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.cs533.newprocessor.components.memorysubsystem.*;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
 import org.cs533.newprocessor.components.bus.CacheCoherenceBus.BusMessage;
+import org.cs533.newprocessor.components.bus.CacheCoherenceBus.MessageTypes;
+import org.cs533.newprocessor.components.bus.CacheCoherenceBus.ResponseTypes;
+import org.cs533.newprocessor.components.memorysubsystem.l1cache.L1CacheLine.L1LineStates;
 
 /**
  *
  * @author amit
  */
 public class L1Cache implements ComponentInterface, MemoryInterface {
+
+    public class WriteBackMessagePair {
+
+        MemoryInstruction toWriteBack;
+        BusMessage message;
+
+        public WriteBackMessagePair(MemoryInstruction toWriteBack, BusMessage message) {
+            this.toWriteBack = toWriteBack;
+            this.message = message;
+        }
+
+        public BusMessage getMessage() {
+            return message;
+        }
+
+        public MemoryInstruction getToWriteBack() {
+            return toWriteBack;
+        }
+    }
 
     /* *************************
     These queues are used for communication on the Bus to L2 and between caches
@@ -27,8 +50,10 @@ public class L1Cache implements ComponentInterface, MemoryInterface {
     /* *************************
     Here we store the internal state of the L1Cache
      ************************ */
-    /** This is the queue of memory instructions which the core has sent in to the cache */
-    LinkedBlockingQueue<MemoryInstruction> instructionsToDo = new LinkedBlockingQueue<MemoryInstruction>();
+    /** This is the list of memory instructions which the core has sent in to the cache */
+    Vector<MemoryInstruction> instructionsToDo = new Vector<MemoryInstruction>();
+    /** This is the list of write back instructions which we are waiting to finish before we can ack the originating message */
+    Vector<WriteBackMessagePair> writeBackPairs = new Vector<WriteBackMessagePair>();
     /** This is the backing store for the cache. It is a fully associative cache with LRU replacement */
     LRUEvictHashTable<L1CacheLine> l1BackingStore = new LRUEvictHashTable<L1CacheLine>(Globals.L1_SIZE_IN_NUMBER_OF_LINES);
     /** This is the list of messages that we have pulled of the queue in runPrep */
@@ -47,12 +72,14 @@ public class L1Cache implements ComponentInterface, MemoryInterface {
     }
 
     public void runPrep() {
-        if (!isProcessing) {
-            toDo = instructionsToDo.poll();
+        if (!isProcessing && !instructionsToDo.isEmpty()) {
+            toDo = instructionsToDo.firstElement();
             if (toDo != null) {
                 isProcessing = true;
                 waitCycles = 0;
             }
+        } else if (!isProcessing && instructionsToDo.isEmpty()) {
+            toDo = null;
         }
         while (inMessageQueue.size() > 0) {
             BusMessage message = inMessageQueue.poll();
@@ -68,13 +95,49 @@ public class L1Cache implements ComponentInterface, MemoryInterface {
     }
 
     public void runClock() {
+        checkWriteBackMessagePairs();
         processMessages();
         if (isProcessing) {
             runMemoryTransaction();
         }
     }
 
+    public void checkWriteBackMessagePairs() {
+     //   for(WriteBackMessagePairs pair: )
+    }
+
     public void processMessages() {
+        int size = messagesToDo.size();
+        for (int i = 0; i < size; i++) {
+            /* iterate through the array removing from the head
+             * we do this so we can add messages to the tail 
+             * without looping through them again. */
+            BusMessage message = messagesToDo.remove(0);
+            int normAdd = computeNormalizedAddress(message.address);
+            L1CacheLine line = l1BackingStore.get(normAdd);
+            if (line != null) {
+                if (message.messageType == MessageTypes.GET_EXCLUSIVE) {
+                    if (line.getCurrentState() == L1LineStates.Dirty_Valid) {
+                        // WE NEED TO WRITE-BACK and invalidate the line.
+                        // Once this is confirmed then we can ack the message.
+                        MemoryInstruction memToDo = new MemoryInstruction(normAdd, line.getData(), true);
+                        instructionsToDo.add(0, memToDo);
+                        writeBackPairs.add(new WriteBackMessagePair(memToDo, message));
+                        line.setCurrentState(L1LineStates.INVALIDATE_AFTER_WRITE_BACK);
+                    } else {
+                        //WE HAVE IT BUT IT IS CLEAN SO WE GO INVALID AND ACK
+                        line.setCurrentState(L1LineStates.Invalid);
+                        message.response = ResponseTypes.ACK;
+                    }
+                }
+            } else {
+                //Line not in cache, just ack that we saw the message. Nothing to do here
+                message.response = ResponseTypes.ACK;
+            }
+            if (message.response != null) {
+                outMessageQueue.add(message);
+            }
+        }
     }
 
     public void runMemoryTransaction() {
