@@ -21,6 +21,7 @@ public class Simulator {
 
     static ArrayList<ComponentInterface> components = new ArrayList<ComponentInterface>();
     static Thread simulatorThread;
+    static boolean isStarted = false;
 
     private Simulator() {
     }
@@ -39,7 +40,7 @@ public class Simulator {
 
         MemoryInstruction[] instruction = new MemoryInstruction[4];//
         for (int i = 0; i < instruction.length; i++) {
-            instruction[i] = new MemoryInstruction(i*4, generateSimpleCacheLineFromOffset(i * 4), true);
+            instruction[i] = MemoryInstruction.Store(i*4, generateSimpleCacheLineFromOffset(i * 4));
             l2.enqueueMemoryInstruction(instruction[i]);
         }
         runSimulation();
@@ -48,7 +49,7 @@ public class Simulator {
                 Thread.sleep(1);
             }
         }
-        MemoryInstruction readInstr = new MemoryInstruction(0, null, false);
+        MemoryInstruction readInstr = MemoryInstruction.Load(0);
         l2.enqueueMemoryInstruction(readInstr);
         while (!readInstr.getIsCompleted()) {
             Thread.sleep(1);
@@ -65,6 +66,7 @@ public class Simulator {
 
     public static void stopSimulation() {
         simulatorThread.interrupt();
+
     }
 
     public static void runSimulation() {
@@ -81,6 +83,7 @@ public class Simulator {
                     }
 
                 }
+                isStarted = false;
             }
         });
         simulatorThread.start();

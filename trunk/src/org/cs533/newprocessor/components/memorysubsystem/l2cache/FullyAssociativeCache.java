@@ -4,12 +4,12 @@
  */
 package org.cs533.newprocessor.components.memorysubsystem.l2cache;
 
-import org.cs533.newprocessor.components.memorysubsystem.LRUEvictHashTable;
 import org.cs533.newprocessor.components.memorysubsystem.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
+import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction.InstructionType;
 import org.cs533.newprocessor.simulator.Simulator;
 
 /**
@@ -90,7 +90,7 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
                     toDo.setIsCompleted(true);
                     memoryReadInstruction = null;
                 }
-            } else if (toDo.isIsWriteInstruction()) {
+            } else if (toDo.getType() == InstructionType.Store) {
                 Logger.getAnonymousLogger().info("In write instruction");
                 // this is the entry point for a write
                 if (!runL2Write()) { //we have an eviction
@@ -103,12 +103,12 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
                 toDo.setIsCompleted(true);
 
                 Logger.getAnonymousLogger().info(" set toDo.isCompleted to  " + toDo.getIsCompleted());
-            } else if (!toDo.isIsWriteInstruction()) {
+            } else if (toDo.getType() == InstructionType.Load) {
                 Logger.getAnonymousLogger().info("In read instruction");
                 // this is the entry point for a read.
                 boolean runMainMemoryRead = !runL2Read();
                 if (runMainMemoryRead) {
-                    memoryReadInstruction = new MemoryInstruction(toDo.getInAddress(), toDo.getInData(), false);
+                    memoryReadInstruction =  MemoryInstruction.Load(toDo.getInAddress());
                     parentMem.enqueueMemoryInstruction(memoryReadInstruction);
                 } else {
                     toDo.setIsCompleted(true);
@@ -139,7 +139,7 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
     public void handleEviction() {
         Logger.getAnonymousLogger().info("running eviction in L2");
         evictInstruction =
-                new MemoryInstruction(l2CacheStore.address, l2CacheStore.line.getData(), true);
+                 MemoryInstruction.Store(l2CacheStore.address, l2CacheStore.line.getData());
         l2CacheStore.resetRemoved();
         parentMem.enqueueMemoryInstruction(evictInstruction);
     }
