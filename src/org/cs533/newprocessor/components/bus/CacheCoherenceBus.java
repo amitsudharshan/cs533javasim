@@ -15,7 +15,7 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
  * and the higher level. 
  * @author brandon
  */
-public class CacheCoherenceBus implements ComponentInterface {
+public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
 
     public enum MessageTypes {
 
@@ -31,16 +31,16 @@ public class CacheCoherenceBus implements ComponentInterface {
         GetMsg, BroadcastMsg, GetResponses, BroadcastResponse, Delay
     }
     
-    ArrayList<BusClient> clients;
+    ArrayList<BusClient<BusMessage>> clients;
     MemoryInterface upstream;
-    BusMessageAggregator aggregator;
-    BusClient currentMaster;
+    BusAggregator<BusMessage> aggregator;
+    BusClient<BusMessage> currentMaster;
     Phase phase = Phase.GetMsg;
     int nextClient = 0;
     BusMessage msg = null;  
     int runCycles = 0;
 
-    public void registerClient(BusClient client) {
+    public void registerClient(BusClient<BusMessage> client) {
         if (!clients.contains(client)) {
             clients.add(client);
         }
@@ -64,7 +64,7 @@ public class CacheCoherenceBus implements ComponentInterface {
                 else {
                     currentMaster = clients.get(j);
                     nextClient = (nextClient+1)%clients.size();
-                    for (BusClient client : clients) {
+                    for (BusClient<BusMessage> client : clients) {
                         if (client != currentMaster)
                             client.recieveMessage(msg);
                     }
@@ -76,13 +76,13 @@ public class CacheCoherenceBus implements ComponentInterface {
                     }                        
                 }
             case GetResponses:
-                for (BusClient client : clients) {
+                for (BusClient<BusMessage> client : clients) {
                     if (client != currentMaster) {
                         aggregator.aggregate(client.getResponse());
                     }
                 }
                 BusMessage response = aggregator.getResult();
-                for (BusClient client : clients) {
+                for (BusClient<BusMessage> client : clients) {
                     client.recieveMessage(response);
                 }
                 aggregator = currentMaster.getAggregator();
