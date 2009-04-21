@@ -135,7 +135,7 @@ public class CacheCoherenceBus implements ComponentInterface {
                 // write instruction on L1 evict
                 toDo = new MemoryInstruction(toDoFromL2.address, toDoFromL2.inData, true);
             }
-            l2Cache.setMemoryInstruction(toDo);
+            l2Cache.enqueueMemoryInstruction(toDo);
         } else if (toDo != null && toDo.getIsCompleted() && waitCyclesOnL2Resp++ >= Globals.CACHE_COHERENCE_BUS_LATENCY) {
             /* Once we have sent the memory instruction L2, we have to wait
             till it is completed, and then we have to wait for the latency

@@ -29,7 +29,7 @@ public class MainMemory implements ComponentInterface,MemoryInterface {
         Simulator.registerComponent(this);
     }
 
-    public void setMemoryInstruction(MemoryInstruction instruction) {
+    public void enqueueMemoryInstruction(MemoryInstruction instruction) {
         inQueue.add(instruction);
     }
 
@@ -80,7 +80,7 @@ public class MainMemory implements ComponentInterface,MemoryInterface {
             b[i] = (byte) i;
         }
         MemoryInstruction instruction = new MemoryInstruction(0, b, true);
-        m.setMemoryInstruction(instruction);
+        m.enqueueMemoryInstruction(instruction);
         m.runPrep();
         while (!instruction.isCompleted) {
             m.runClock();

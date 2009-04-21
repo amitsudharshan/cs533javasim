@@ -22,7 +22,7 @@ public class Simulator {
     static ArrayList<ComponentInterface> components = new ArrayList<ComponentInterface>();
     static Thread simulatorThread;
 
-    public Simulator() {
+    private Simulator() {
     }
 
     public static byte[] generateSimpleCacheLineFromOffset(int offset) {
@@ -40,7 +40,7 @@ public class Simulator {
         MemoryInstruction[] instruction = new MemoryInstruction[4];//
         for (int i = 0; i < instruction.length; i++) {
             instruction[i] = new MemoryInstruction(i*4, generateSimpleCacheLineFromOffset(i * 4), true);
-            l2.setMemoryInstruction(instruction[i]);
+            l2.enqueueMemoryInstruction(instruction[i]);
         }
         runSimulation();
         for (int i = 0; i < instruction.length; i++) {
@@ -49,7 +49,7 @@ public class Simulator {
             }
         }
         MemoryInstruction readInstr = new MemoryInstruction(0, null, false);
-        l2.setMemoryInstruction(readInstr);
+        l2.enqueueMemoryInstruction(readInstr);
         while (!readInstr.getIsCompleted()) {
             Thread.sleep(1);
         }

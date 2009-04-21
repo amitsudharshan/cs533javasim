@@ -32,7 +32,7 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
     int waitCycles = 0;
     int readMissCounter = 0;
 
-    public void setMemoryInstruction(MemoryInstruction instr) {
+    public void enqueueMemoryInstruction(MemoryInstruction instr) {
         queue.add(instr);
     }
 
@@ -109,7 +109,7 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
                 boolean runMainMemoryRead = !runL2Read();
                 if (runMainMemoryRead) {
                     memoryReadInstruction = new MemoryInstruction(toDo.getInAddress(), toDo.getInData(), false);
-                    parentMem.setMemoryInstruction(memoryReadInstruction);
+                    parentMem.enqueueMemoryInstruction(memoryReadInstruction);
                 } else {
                     toDo.setIsCompleted(true);
                     isProcessing = false;
@@ -141,7 +141,7 @@ public class FullyAssociativeCache implements ComponentInterface,MemoryInterface
         evictInstruction =
                 new MemoryInstruction(l2CacheStore.address, l2CacheStore.line.getData(), true);
         l2CacheStore.resetRemoved();
-        parentMem.setMemoryInstruction(evictInstruction);
+        parentMem.enqueueMemoryInstruction(evictInstruction);
     }
 
     /**
