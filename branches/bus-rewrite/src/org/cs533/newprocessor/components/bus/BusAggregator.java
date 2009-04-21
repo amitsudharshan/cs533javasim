@@ -9,7 +9,7 @@ package org.cs533.newprocessor.components.bus;
  *
  * @author brandon
  */
-public class BusMessageAggregator {
+public class BusAggregator<BusMessage> {
     void aggregate(BusMessage msg) {}
     void aggregateParent(BusMessage msg) {}
     BusMessage getResult() {

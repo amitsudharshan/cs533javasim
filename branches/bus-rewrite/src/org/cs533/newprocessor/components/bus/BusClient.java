@@ -5,6 +5,8 @@
 
 package org.cs533.newprocessor.components.bus;
 
+import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
+
 /**
  * A client on a cache coherence bus. During the
  * {@link org.cs533.newprocessor.components.ComponentInterface#runPrep runPrep}
@@ -17,9 +19,10 @@ package org.cs533.newprocessor.components.bus;
  * with the returned aggregator.
  * @author brandon
  */
-public interface BusClient {
+public interface BusClient<BusMessage> {
     void recieveMessage(BusMessage msg);
     BusMessage getResponse();
     BusMessage getBusMessage();
-    BusMessageAggregator getAggregator();
+    BusAggregator<BusMessage> getAggregator();
+    MemoryInstruction getMemoryRequest();
 };
