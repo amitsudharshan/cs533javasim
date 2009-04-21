@@ -7,6 +7,7 @@ package org.cs533.newprocessor.components.memorysubsystem;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
+import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction.InstructionType;
 import org.cs533.newprocessor.simulator.Simulator;
 
 /**
@@ -54,7 +55,7 @@ public class MainMemory implements ComponentInterface,MemoryInterface {
     }
 
     public void runMemoryInstruction() {
-        if (toDo.isIsWriteInstruction()) {
+        if (toDo.getType() == InstructionType.Store) {
             int counter = 0;
             for (int i = toDo.getInAddress(); i < toDo.getInData().length; i++) {
                 memory[i] = toDo.getInData()[counter++];
@@ -79,7 +80,7 @@ public class MainMemory implements ComponentInterface,MemoryInterface {
         for (int i = 0; i < b.length; i++) {
             b[i] = (byte) i;
         }
-        MemoryInstruction instruction = new MemoryInstruction(0, b, true);
+        MemoryInstruction instruction =  MemoryInstruction.Store(0, b);
         m.enqueueMemoryInstruction(instruction);
         m.runPrep();
         while (!instruction.isCompleted) {

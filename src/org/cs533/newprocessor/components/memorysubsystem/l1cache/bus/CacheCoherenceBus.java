@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.cs533.newprocessor.components.bus;
+package org.cs533.newprocessor.components.memorysubsystem.l1cache.bus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -130,10 +130,10 @@ public class CacheCoherenceBus implements ComponentInterface {
             // HERE WE ARE GOING TO Queue the L2 transaction AFTER WAITING ENOUGH BUS CYCLES
             if (toDoFromL2.messageType == MessageTypes.CACHE_MISS_READ) {
                 //read instruction on L1 miss
-                toDo = new MemoryInstruction(toDoFromL2.address, null, false);
+                toDo = MemoryInstruction.Load(toDoFromL2.address);
             } else if (toDoFromL2.messageType == MessageTypes.CACHE_EVICT_WRITE) {
                 // write instruction on L1 evict
-                toDo = new MemoryInstruction(toDoFromL2.address, toDoFromL2.inData, true);
+                toDo = MemoryInstruction.Store(toDoFromL2.address, toDoFromL2.inData);
             }
             l2Cache.enqueueMemoryInstruction(toDo);
         } else if (toDo != null && toDo.getIsCompleted() && waitCyclesOnL2Resp++ >= Globals.CACHE_COHERENCE_BUS_LATENCY) {
