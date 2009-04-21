@@ -287,7 +287,7 @@ public class L1Cache implements ComponentInterface, MemoryInterface {
         return Globals.L1_CACHE_LATENCY;
     }
 
-    public void setMemoryInstruction(MemoryInstruction instr) {
+    public void enqueueMemoryInstruction(MemoryInstruction instr) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 }

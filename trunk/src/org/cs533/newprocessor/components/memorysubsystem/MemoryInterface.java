@@ -11,5 +11,5 @@ package org.cs533.newprocessor.components.memorysubsystem;
  */
 public interface MemoryInterface {
 
-    public void setMemoryInstruction(MemoryInstruction instr);
+    public void enqueueMemoryInstruction(MemoryInstruction instr);
 }
