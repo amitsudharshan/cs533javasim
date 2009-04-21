@@ -12,23 +12,42 @@ import org.cs533.newprocessor.Globals;
  */
 public class MemoryInstruction {
 
+    public enum InstructionType {
+
+        Load, Store, CAS
+    }
+    InstructionType type;
+    int type_flags;
     int inAddress;
     byte[] inData;
-    boolean isWriteInstruction;
     boolean isCompleted;
 
     /* output ports */
     byte[] outData;
 
-    public MemoryInstruction(int inAddress, byte[] data, boolean isWriteInstruction) {
+    public static MemoryInstruction Load(int inAddress) {
+        return new MemoryInstruction(inAddress, null, InstructionType.Load);
+    }
+
+    public static MemoryInstruction Store(int inAddress, byte[] data) {
+        return new MemoryInstruction(inAddress, data, InstructionType.Store);
+    }
+    
+    public static MemoryInstruction CompareAndSwap(int inAddress, byte[] data) {
+        return new MemoryInstruction(inAddress,data,InstructionType.CAS);
+    }
+
+    protected MemoryInstruction(int inAddress, byte[] data, InstructionType type) {
+        this.type = type;
+        this.type_flags = 0;
         this.inAddress = inAddress;
         this.inData = data;
-        this.isWriteInstruction = isWriteInstruction;
+        this.outData = null;
         this.isCompleted = false;
     }
 
     public static void main(String[] args) {
-        int add = (5/Globals.CACHE_LINE_SIZE) * Globals.CACHE_LINE_SIZE;
+        int add = (5 / Globals.CACHE_LINE_SIZE) * Globals.CACHE_LINE_SIZE;
         System.out.println(add);
     }
 
@@ -56,7 +75,10 @@ public class MemoryInstruction {
         return inAddress;
     }
 
-    public boolean isIsWriteInstruction() {
-        return isWriteInstruction;
+    public InstructionType getType() {
+        return type;
+    }
+    public int getTypeFlags() {
+        return type_flags;
     }
 }
