@@ -39,4 +39,8 @@ public class LRUEvictHashTable<T extends CacheLine> extends LinkedHashMap<Intege
         address = -1;
         line = null;
     }
+
+    void add(L1MESI newCacheLine) {
+
+    }
 }

@@ -24,9 +24,11 @@ public class L1CacheLine extends CacheLine {
                 (currentState == L1LineStates.EXCLUSIVE_VALID) || (currentState == L1LineStates.INVALIDATE_AFTER_WRITE_BACK);
     }
 
-    public boolean validForWrite() {
+
+
+    public boolean validForWrite(){
         return (currentState == L1LineStates.EXCLUSIVE_DIRTY) || (currentState == L1LineStates.EXCLUSIVE_VALID);
-    }
+    }    
 
     public L1CacheLine(byte[] data, L1LineStates state) {
         this.data = data;
@@ -36,6 +38,8 @@ public class L1CacheLine extends CacheLine {
     public void setCurrentState(L1LineStates state) {
         currentState = state;
     }
+
+
 
     public L1LineStates getCurrentState() {
         return currentState;
@@ -48,4 +52,8 @@ public class L1CacheLine extends CacheLine {
     public void setData(byte[] data) {
         this.data = data;
     }
+
+
+
+
 }
