@@ -2,9 +2,9 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.cs533.newprocessor.assembler;
+package org.cs533.newprocessor.assembler.abstractandinterface;
 
-import org.cs533.newprocessor.assembler.instructionTypes.ALUInstruction;
+import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction.InstructionType;
 
 /**
  *
@@ -19,14 +19,29 @@ public abstract class AbstractInstruction {
 
         alu, branch, memory
     }
+
     public abstract int dissasembleInstruction(String instruction);
 
-    public int getIntForRegisterName(String reg) {
+    public abstract InstructionTypes getType();
+
+    public static int getIntForRegisterName(String reg) {
         int regNumber = Integer.parseInt(reg.replaceAll("r", ""));
         return regNumber;
     }
 
-    public String zeroPadIntForString(int value, int totalBits) {
+    public static final byte[] intToByteArray(int value) {
+        return new byte[]{
+                    (byte) (value >>> 24),
+                    (byte) (value >>> 16),
+                    (byte) (value >>> 8),
+                    (byte) value};
+    }
+
+    public static final int byteArrayToInt(byte[] b) {
+        return (b[0] << 24) + ((b[1] & 0xFF) << 16) + ((b[2] & 0xFF) << 8) + (b[3] & 0xFF);
+    }
+
+    public static String zeroPadIntForString(int value, int totalBits) {
         String bin = Integer.toBinaryString(value);
         while (bin.length() != totalBits) {
             bin = "0" + bin;
@@ -43,6 +58,6 @@ public abstract class AbstractInstruction {
     }
 
     public static void main(String[] args) {
-        ALUInstruction.main(null);
+        System.out.println("AbstractInstruction");
     }
 }
