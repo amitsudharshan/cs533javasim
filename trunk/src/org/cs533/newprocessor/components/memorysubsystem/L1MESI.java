@@ -13,25 +13,11 @@ import org.cs533.newprocessor.components.memorysubsystem.CacheLine;
 public class L1MESI extends CacheLine
 {
 
-    public L1MESI(int i, boolean b)
-    {
-         data = i;
-         b = false;
-    }
 
-    L1MESI() {
-
-    }
 
     public enum L1LineStates {
 
        EXCL, Invalid, Dirty, Shared
-    }
-
-    public L1MESI(int initState )
-    {
-        state = initState;
-
     }
 
     public enum Event{
@@ -43,6 +29,17 @@ public class L1MESI extends CacheLine
     public int event;
     public int data;
     public byte[] address;
+
+    public L1MESI(int i, boolean b)
+    {
+         data = i;
+         b = false;
+    }
+
+ 
+
+
+    
 
     public int onMessage(int currentState, Event event, int status, boolean shared, int data )
     {
