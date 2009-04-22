@@ -13,11 +13,11 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
  * This class contains a store instruction implemenation
  * So far this instruction will only support store from register source into
  * register destiation.
- * It takes instructions of the form: store r1 r2 which will place the
+ * It takes instructions of the form: sw r1 r2 which will place the
  * contents of r2 in the memory location at address r1.
  * @author amit
  */
-public class StoreInstruction extends AbstractInstruction implements MemoryInstructionInterface {
+public class StoreWordInstruction extends AbstractInstruction implements MemoryInstructionInterface {
 
     static final int opcode = 0x2B;
     static final InstructionTypes type = InstructionTypes.memory;
@@ -29,12 +29,17 @@ public class StoreInstruction extends AbstractInstruction implements MemoryInstr
     int registerContent;
     int registerAddress;
 
-    public StoreInstruction() {
+    public StoreWordInstruction() {
     }
 
-    public StoreInstruction(int instruction) {
+    public StoreWordInstruction(int instruction) {
         this();
         setRegisters(instruction);
+    }
+
+    @Override
+    public AbstractInstruction getAbstractInstruction(int instruction) {
+        return new StoreWordInstruction(instruction);
     }
 
     public void setRegisters(int instruction) {
@@ -43,10 +48,10 @@ public class StoreInstruction extends AbstractInstruction implements MemoryInstr
     }
 
     public static void main(String[] args) {
-        StoreInstruction store = new StoreInstruction();
+        StoreWordInstruction store = new StoreWordInstruction();
         int instr = store.assembleInstruction("store r2 r3");
         System.out.println("THE INSTRUCTION IS : " + store.zeroPadIntForString(instr, 32));
-        store = new StoreInstruction(instr);
+        store = new StoreWordInstruction(instr);
         System.out.println(store);
 
     }
@@ -72,25 +77,30 @@ public class StoreInstruction extends AbstractInstruction implements MemoryInstr
         return instr;
 
     }
-/**
- * This method will return a memoryinstruction which contains the address
- * and value to store.
- * @param rFile The registerfile
- * @return the memory instruction to send to memory
- */
+
+    /**
+     * This method will return a memoryinstruction which contains the address
+     * and value to store.
+     * @param rFile The registerfile
+     * @return the memory instruction to send to memory
+     */
     public MemoryInstruction getMemoryInstruction(RegisterFile rFile) {
         int address = rFile.getValueForRegister(registerAddress);
         byte[] toStore = intToByteArray(rFile.getValueForRegister(registerContent));
         return MemoryInstruction.Store(address, toStore);
     }
 
-    public void handleMemoryInstruction(MemoryInstruction memoryInstruction, RegisterFile rFile) {
-        // once the value is stored we don't need to do anything
+    public void handleWriteBack(byte[] toWriteBack, RegisterFile rFile) {
         return;
     }
 
     @Override
     public InstructionTypes getType() {
         return type;
+    }
+
+    @Override
+    public int getOpcode() {
+        return opcode;
     }
 }

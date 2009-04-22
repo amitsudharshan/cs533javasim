@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
+import org.cs533.newprocessor.components.core.ProcessorCore;
 import org.cs533.newprocessor.components.memorysubsystem.l2cache.L2Cache;
 import org.cs533.newprocessor.components.memorysubsystem.MainMemory;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
@@ -36,11 +37,36 @@ public class Simulator {
     }
 
     public static void main(String[] args) throws Exception {
+        String imageFileName = "/home/amit/asm/a.out";
+        if (args.length > 0) {
+            imageFileName = args[0];
+        }
+        ExecutableImage exec = ExecutableImage.loadImageFromFile(imageFileName);
+        MainMemory memory = new MainMemory(exec.getMemoryImage());
+        int[] pcStart = exec.getInitialPC();
+        ProcessorCore[] pCore = new ProcessorCore[pcStart.length];
+        for (int i = 0; i < pCore.length; i++) {
+            pCore[i] = new ProcessorCore(pcStart[i], memory);
+        }
+        runSimulation();
+        int doneProcessor = 0;
+        while (doneProcessor < pCore.length) {
+            if (pCore[doneProcessor].isHalted()) {
+                doneProcessor++;
+            }
+            Thread.sleep(10);
+        }
+
+
+
+    }
+
+    public static void testMemoryMain(String[] args) throws Exception {
         L2Cache l2 = new L2Cache(new MainMemory());
 
         MemoryInstruction[] instruction = new MemoryInstruction[4];//
         for (int i = 0; i < instruction.length; i++) {
-            instruction[i] = MemoryInstruction.Store(i*4, generateSimpleCacheLineFromOffset(i * 4));
+            instruction[i] = MemoryInstruction.Store(i * 4, generateSimpleCacheLineFromOffset(i * 4));
             l2.enqueueMemoryInstruction(instruction[i]);
         }
         runSimulation();

@@ -5,7 +5,9 @@
 package org.cs533.newprocessor.assembler.instructionTypes;
 
 import java.util.HashMap;
+import org.cs533.newprocessor.assembler.abstractandinterface.ALUInstructionInterface;
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;
+import org.cs533.newprocessor.components.core.RegisterFile;
 
 /**
  *This is a representation of a three parameter ALU Instruction
@@ -14,7 +16,7 @@ import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction
  * We will also do sub, and mul eventually
  * @author amit
  */
-public class ALUInstruction extends AbstractInstruction {
+public class ThreeRegisterALUInstruction extends AbstractInstruction implements ALUInstructionInterface {
 
     int registerSource1;
     int registerSource2;
@@ -37,16 +39,21 @@ public class ALUInstruction extends AbstractInstruction {
     public HashMap<Integer, String> aluFunctionCodes;
     public HashMap<String, Integer> functionCodeForInstruction;
 
-    public ALUInstruction() {
+    public ThreeRegisterALUInstruction() {
         //This constructor is only called once in the Assembler to be able to
         // get a reference to the dissasemble method
         createFunctionCodesMap();
     }
 
-    public ALUInstruction(int instruction) {
+    public ThreeRegisterALUInstruction(int instruction) {
         this();
         setRegisters(instruction);
 
+    }
+
+    @Override
+    public AbstractInstruction getAbstractInstruction(int instruction) {
+        return new ThreeRegisterALUInstruction(instruction);
     }
 
     public void createFunctionCodesMap() {
@@ -101,12 +108,12 @@ public class ALUInstruction extends AbstractInstruction {
     }
 
     public static void main(String[] args) {
-        ALUInstruction a = new ALUInstruction();
+        ThreeRegisterALUInstruction a = new ThreeRegisterALUInstruction();
         String instruction = "add r28 r3 r16 ";
         int instructionBin = a.assembleInstruction(instruction);
         System.out.println("int value is " + Integer.toHexString(instructionBin));
         System.out.println(a.zeroPadIntForString(instructionBin, 32));
-        ALUInstruction aF = new ALUInstruction(instructionBin);
+        ThreeRegisterALUInstruction aF = new ThreeRegisterALUInstruction(instructionBin);
         System.out.println(aF);
 
     }
@@ -114,5 +121,18 @@ public class ALUInstruction extends AbstractInstruction {
     @Override
     public InstructionTypes getType() {
         return type;
+    }
+
+    public void executeOperation(RegisterFile reg) {
+        if (functionCodeForInstruction.get(functionCode).equals("add")) {
+            int op1 = reg.getValueForRegister(registerSource1);
+            int op2 = reg.getValueForRegister(registerSource2);
+            reg.setValueForRegister(registerDestination, op1 + op2);
+        }
+    }
+
+    @Override
+    public int getOpcode() {
+        return opcode;
     }
 }

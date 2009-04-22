@@ -4,7 +4,8 @@
  */
 package org.cs533.newprocessor.assembler.abstractandinterface;
 
-import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction.InstructionType;
+import java.util.HashMap;
+import org.cs533.newprocessor.assembler.OpcodeMetaData;
 
 /**
  *
@@ -14,19 +15,35 @@ public abstract class AbstractInstruction {
 
     public static final int OP_CODE_MASK = 0xF9000000;
     public static final int OP_CODE_SHIFT = 26;
+    public static final int LOWER_16_IMMEDIATE_MASK = 0x0000FFFF;
+    public static final HashMap<Integer, AbstractInstruction> instructionMap = OpcodeMetaData.populateInstructionAssemblerMap();
 
     public enum InstructionTypes {
 
-        alu, branch, memory
+        alu, branch, memory, halt
     }
 
     public abstract int assembleInstruction(String instruction);
 
     public abstract InstructionTypes getType();
 
+    public abstract AbstractInstruction getAbstractInstruction(int instruction);
+
+    public abstract int getOpcode();
+
     public static int getIntForRegisterName(String reg) {
         int regNumber = Integer.parseInt(reg.replaceAll("r", ""));
         return regNumber;
+    }
+
+    public int parseImmediate(String imm) {
+
+        int toReturn = Integer.decode(imm.substring(1));
+        if (imm.charAt(0) == 'U') {
+            toReturn = toReturn >> 16; //move the
+        }
+        toReturn &= LOWER_16_IMMEDIATE_MASK; // removes any upper bits
+        return toReturn;
     }
 
     public static final byte[] intToByteArray(int value) {
@@ -55,6 +72,12 @@ public abstract class AbstractInstruction {
             }
         }
         return buff.toString().trim();
+    }
+
+    public static AbstractInstruction getAbstractInstructionForInstruction(int instruction) {
+        int newInstr = instruction & OP_CODE_MASK;
+        newInstr = newInstr >> OP_CODE_SHIFT;
+        return instructionMap.get(newInstr).getAbstractInstruction(instruction);
     }
 
     public static void main(String[] args) {

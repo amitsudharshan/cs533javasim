@@ -14,7 +14,7 @@ import org.cs533.newprocessor.simulator.Simulator;
  *
  * @author amit
  */
-public class MainMemory implements ComponentInterface,MemoryInterface {
+public class MainMemory implements ComponentInterface, MemoryInterface {
 
     public static final int LATENCY = Globals.MAIN_MEMORY_LATENCY; // MADE UP VALUE HERE
     /* input port */
@@ -28,6 +28,11 @@ public class MainMemory implements ComponentInterface,MemoryInterface {
     public MainMemory() {
         inQueue = new LinkedBlockingQueue<MemoryInstruction>();
         Simulator.registerComponent(this);
+    }
+
+    public MainMemory(byte[] memoryImage) {
+        this();
+        memory = memoryImage;
     }
 
     public void enqueueMemoryInstruction(MemoryInstruction instruction) {
@@ -80,7 +85,7 @@ public class MainMemory implements ComponentInterface,MemoryInterface {
         for (int i = 0; i < b.length; i++) {
             b[i] = (byte) i;
         }
-        MemoryInstruction instruction =  MemoryInstruction.Store(0, b);
+        MemoryInstruction instruction = MemoryInstruction.Store(0, b);
         m.enqueueMemoryInstruction(instruction);
         m.runPrep();
         while (!instruction.isCompleted) {
