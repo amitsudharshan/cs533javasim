@@ -44,7 +44,7 @@ public class StoreInstruction extends AbstractInstruction implements MemoryInstr
 
     public static void main(String[] args) {
         StoreInstruction store = new StoreInstruction();
-        int instr = store.dissasembleInstruction("store r2 r3");
+        int instr = store.assembleInstruction("store r2 r3");
         System.out.println("THE INSTRUCTION IS : " + store.zeroPadIntForString(instr, 32));
         store = new StoreInstruction(instr);
         System.out.println(store);
@@ -59,7 +59,7 @@ public class StoreInstruction extends AbstractInstruction implements MemoryInstr
     }
 
     @Override
-    public int dissasembleInstruction(String instruction) {
+    public int assembleInstruction(String instruction) {
         //instruction = "store r1 r2" places M[r1] = r2;
         int instr = 0;
         String[] tokens = instruction.split(" ");

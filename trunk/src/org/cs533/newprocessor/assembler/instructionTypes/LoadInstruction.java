@@ -48,7 +48,7 @@ public class LoadInstruction extends AbstractInstruction implements MemoryInstru
     }
 
     @Override
-    public int dissasembleInstruction(String instruction) {
+    public int assembleInstruction(String instruction) {
         //instruction = "store r1 r2" places M[r1] = r2;
         int instr = 0;
         String[] tokens = instruction.split(" ");

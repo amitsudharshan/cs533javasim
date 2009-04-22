@@ -72,7 +72,7 @@ public class ALUInstruction extends AbstractInstruction {
     }
 
     @Override
-    public int dissasembleInstruction(String instruction) {
+    public int assembleInstruction(String instruction) {
         int toReturn = -1;
         int instr = 0;
         String[] split = instruction.split(" ");
@@ -103,7 +103,7 @@ public class ALUInstruction extends AbstractInstruction {
     public static void main(String[] args) {
         ALUInstruction a = new ALUInstruction();
         String instruction = "add r28 r3 r16 ";
-        int instructionBin = a.dissasembleInstruction(instruction);
+        int instructionBin = a.assembleInstruction(instruction);
         System.out.println("int value is " + Integer.toHexString(instructionBin));
         System.out.println(a.zeroPadIntForString(instructionBin, 32));
         ALUInstruction aF = new ALUInstruction(instructionBin);
