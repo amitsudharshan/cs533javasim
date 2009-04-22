@@ -1,0 +1,113 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.cs533.newprocessor.assembler.instructionTypes;
+
+import java.util.HashMap;
+import org.cs533.newprocessor.assembler.AbstractInstruction;
+
+/**
+ *This is a representation of a three parameter ALU Instruction
+ *This instruction takes the form " add Rd,Rs,Rt " and executes
+ * Rd = Rs+Rt. This is only for the case of add.
+ * We will also do sub, and mul eventually
+ * @author amit
+ */
+public class ALUInstruction extends AbstractInstruction {
+
+    int registerSource1;
+    int registerSource2;
+    int registerDestination;
+    int functionCode;
+
+    /* opcode */
+    static final int opcode = 0;
+    static final InstructionTypes type = InstructionTypes.alu;
+
+    /*decoding masks */
+    static final int source1Mask = 0x03E00000;
+    static final int source2Mask = 0x001F0000;
+    static final int destMask = 0x0000F800;
+    static final int functionCodeMask = 0x0000003F;
+    /* Shift bits */
+    static final int source1Shift = 21;
+    static final int source2Shift = 16;
+    static final int destShift = 11;
+    public HashMap<Integer, String> aluFunctionCodes;
+    public HashMap<String, Integer> functionCodeForInstruction;
+
+    public ALUInstruction() {
+        //This constructor is only called once in the Assembler to be able to
+        // get a reference to the dissasemble method
+        createFunctionCodesMap();
+    }
+
+    public ALUInstruction(int instruction) {
+        this();
+        setRegisters(instruction);
+
+    }
+
+    public void createFunctionCodesMap() {
+        aluFunctionCodes = new HashMap<Integer, String>();
+        functionCodeForInstruction = new HashMap<String, Integer>();
+        aluFunctionCodes.put(0x20, "add");
+        functionCodeForInstruction.put("add", 0x20);
+    }
+
+    public void setRegisters(int instruction) {
+        int masked = instruction & source1Mask;
+        registerSource1 = masked >> source1Shift;
+
+        masked = instruction & source2Mask;
+        registerSource2 = masked >> source2Shift;
+
+        masked = instruction & destMask;
+        registerDestination = masked >> destShift;
+
+        masked = instruction & functionCodeMask;
+        functionCode = masked;
+        System.out.println("got function code = " + functionCode);
+    }
+
+    @Override
+    public int dissasembleInstruction(String instruction) {
+        int toReturn = -1;
+        int instr = 0;
+        String[] split = instruction.split(" ");
+        instr |= opcode << AbstractInstruction.OP_CODE_SHIFT;
+        instr |= getIntForRegisterName(split[1]) << source1Shift;
+        instr |= getIntForRegisterName(split[2]) << source2Shift;
+        instr |= getIntForRegisterName(split[3]) << destShift;
+        Integer theFunction = functionCodeForInstruction.get(split[0]);
+        if (theFunction != null) {
+            instr |= theFunction;
+            toReturn = instr;
+        }
+        return toReturn;
+    }
+
+    @Override
+    public String toString() {
+        StringBuffer toReturn = new StringBuffer();
+        toReturn.append("instruction functionCode : " + functionCode + "\n");
+        toReturn.append("\t functionCode type : " + aluFunctionCodes.get(functionCode) + "\n");
+        toReturn.append("source 1 register is : " + registerSource1 + "\n");
+        toReturn.append("source 2 register is : " + registerSource2 + "\n");
+        toReturn.append("destination register is : " + registerDestination + "\n");
+        return toReturn.toString();
+
+    }
+
+    public static void main(String[] args) {
+        ALUInstruction a = new ALUInstruction();
+        String instruction = "add r28 r3 r16 ";
+        int instructionBin = a.dissasembleInstruction(instruction);
+        System.out.println("int value is " + Integer.toHexString(instructionBin));
+        System.out.println(a.zeroPadIntForString(instructionBin, 32));
+        ALUInstruction aF = new ALUInstruction(instructionBin);
+        System.out.println(aF);
+
+    }
+}
