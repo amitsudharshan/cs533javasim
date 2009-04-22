@@ -12,11 +12,11 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction.Instr
 
 /**
  *these can handle load instructions of the form
- * load r1 r2 which loads into r2 the value of memory at r1
+ * lw r1 r2 which loads into r2 the value of memory at r1
  * it can also load
  * @author amit
  */
-public class LoadInstruction extends AbstractInstruction implements MemoryInstructionInterface {
+public class LoadWordInstruction extends AbstractInstruction implements MemoryInstructionInterface {
 
     public static int opcode = 0x23;
     public static InstructionTypes type = InstructionTypes.memory;
@@ -28,11 +28,16 @@ public class LoadInstruction extends AbstractInstruction implements MemoryInstru
     int registerContent;
     int registerAddress;
 
-    public LoadInstruction() {
+    public LoadWordInstruction() {
     }
 
-    public LoadInstruction(int instruction) {
+    public LoadWordInstruction(int instruction) {
         setRegisters(instruction);
+    }
+
+    @Override
+    public AbstractInstruction getAbstractInstruction(int instruction) {
+        return new LoadWordInstruction(instruction);
     }
 
     public void setRegisters(int instruction) {
@@ -65,12 +70,17 @@ public class LoadInstruction extends AbstractInstruction implements MemoryInstru
         return MemoryInstruction.Load(rFile.getValueForRegister(registerAddress));
     }
 
-    public void handleMemoryInstruction(MemoryInstruction memoryInstruction, RegisterFile rFile) {
-        rFile.setValueForRegister(registerContent, byteArrayToInt(memoryInstruction.getOutData()));
+    public void handleWriteBack(byte[] toWriteBack, RegisterFile rFile) {
+        rFile.setValueForRegister(registerContent, byteArrayToInt(toWriteBack));
     }
 
     @Override
     public InstructionTypes getType() {
         return type;
+    }
+
+    @Override
+    public int getOpcode() {
+        return opcode;
     }
 }
