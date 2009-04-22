@@ -8,15 +8,36 @@ package org.cs533.newprocessor.components.bus;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
 
 /**
- * A client on a cache coherence bus. During the
- * {@link org.cs533.newprocessor.components.ComponentInterface#runPrep runPrep}
- * phase the bus may look for a compenent ready to initiate a transaction by
- * calling getResponse and looking for a non-null message. If so, getAggregator
- * will also be called to see if the client wants a response, and how to
- * aggregate it. recieveMessage will be invoked on other clients to pass
- * the message along. If an aggregator was set then in the next cycle
- * getResponse will be called on these clients, and the responses aggregated
- * with the returned aggregator.
+ * A client on a cache coherence bus. Implements a generic broadcast protocol:
+ * 
+ * During the {@link org.cs533.newprocessor.components.ComponentInterface#runPrep runPrep}
+ * phase a client is selected to run the next transaction by calling
+ * <code>getBusMessage</code> until it gets a non-null message.
+ * 
+ * If so, it delivers this message to all other clients in the same phase,
+ * by calling <code>recieveMessage</code>.
+ * It determines whether the bus master wants to aggregate a response
+ * or send a memory request to the higher level by checking if
+ * the <code>getAggregator</code> or <code>getMemoryRequest</code>
+ * accessors are non-null.
+ * 
+ * If a response is needed the bus checks the <code>getResponse</code>
+ * property of each client for as many cycles as it takes until they
+ * have all produced a response, which are aggregated through the
+ * provided aggregator. Once the response is available it is delivered
+ * to all clients with <code>recieveMessage</code>. The next clock
+ * the bus owner's <code>getAggregator</code> and <code>getMemoryRequest</code>
+ * accessors are checked to see if we require another communication round
+ * or a memory request, if neither the round is done and we can look
+ * for a new bus owner.
+ * 
+ * If a memory request is made the client propagates it to the
+ * upstream interface, waits as long as it takes until the request
+ * is finished, and then presents the filled-out object to all
+ * clients (to allow read snarfing and so on) through the
+ * <code>recieveMemoryResponse</code> accessor. As with communication rounds,
+ * on the next clock the bus polls the current owner to see if another
+ * communcation round or memory request is required.
  * @author brandon
  */
 public interface BusClient<BusMessage> {
@@ -25,4 +46,5 @@ public interface BusClient<BusMessage> {
     BusMessage getBusMessage();
     BusAggregator<BusMessage> getAggregator();
     MemoryInstruction getMemoryRequest();
+    void recieveMemoryResponse(MemoryInstruction resp);
 };
