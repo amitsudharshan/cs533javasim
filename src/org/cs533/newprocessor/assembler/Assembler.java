@@ -105,7 +105,7 @@ public class Assembler {
         // now we pass this along to the assembler
         AbstractInstruction assembler = opCodeToAssemblerMap.get(split[0]);
         if (assembler != null) {
-            toReturn = assembler.dissasembleInstruction(instruction);
+            toReturn = assembler.assembleInstruction(instruction);
         }
         return toReturn;
     }

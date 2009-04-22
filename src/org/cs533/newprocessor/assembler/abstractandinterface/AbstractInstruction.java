@@ -20,7 +20,7 @@ public abstract class AbstractInstruction {
         alu, branch, memory
     }
 
-    public abstract int dissasembleInstruction(String instruction);
+    public abstract int assembleInstruction(String instruction);
 
     public abstract InstructionTypes getType();
 
