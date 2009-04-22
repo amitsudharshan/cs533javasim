@@ -25,6 +25,15 @@ public class Globals {
     /*
      * MISC L1 Parameters
      */
+
     public static final int MAX_NUMBER_L1_BUS_MESSAGES_PER_CYCLE = 10;
+
+    public static final int OPCODE_LENGTH = 3;
+    public static final int INSTRUCTION_LENGTH = 32;
+
+    public static final int MEMORY_ADDRESS_LENGTH = 19;
+  
+
+
 }
 
