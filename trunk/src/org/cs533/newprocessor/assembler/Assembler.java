@@ -4,6 +4,7 @@
  */
 package org.cs533.newprocessor.assembler;
 
+import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;

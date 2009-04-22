@@ -5,7 +5,7 @@
 package org.cs533.newprocessor.assembler.instructionTypes;
 
 import java.util.HashMap;
-import org.cs533.newprocessor.assembler.AbstractInstruction;
+import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;
 
 /**
  *This is a representation of a three parameter ALU Instruction
@@ -109,5 +109,10 @@ public class ALUInstruction extends AbstractInstruction {
         ALUInstruction aF = new ALUInstruction(instructionBin);
         System.out.println(aF);
 
+    }
+
+    @Override
+    public InstructionTypes getType() {
+        return type;
     }
 }

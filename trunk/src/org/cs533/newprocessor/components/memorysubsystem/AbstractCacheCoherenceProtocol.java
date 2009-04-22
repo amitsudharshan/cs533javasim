@@ -35,8 +35,8 @@ public interface AbstractCacheCoherenceProtocol
     public int BusInvalidate();
 
 
-    static int currentState;
-    static boolean sharedLine;
+    static int currentState = 3;
+    static boolean sharedLine =false;
 
 
 }
