@@ -11,6 +11,7 @@ import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction
 import org.cs533.newprocessor.assembler.abstractandinterface.MemoryInstructionInterface;
 import org.cs533.newprocessor.components.memorysubsystem.MainMemory;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
+import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
 import org.cs533.newprocessor.simulator.Simulator;
 
 /**
@@ -28,9 +29,11 @@ public class ProcessorCore implements ComponentInterface {
         fetch, decode, alu, memory, writeback, halt
     }
     public static final int LATENCY = 1;
-    MainMemory mainMemory;
+    MemoryInterface mainMemory;
     RegisterFile rFile = new RegisterFile();
     ProcessingStates currentState = ProcessingStates.fetch;
+    /** This variable indicates a coreID for the chip during simulation */
+    int coreNumber = -1;
 
     /* State for fetch stage */
     MemoryInstruction fetchInstruction = null;
@@ -52,10 +55,10 @@ public class ProcessorCore implements ComponentInterface {
     /* State if in Halt state */
     boolean isHalted = false;
 
-    public ProcessorCore(int _startPC, MainMemory memory) {
+    public ProcessorCore(int _startPC, MemoryInterface memory, int coreNumber_) {
         rFile.setPC(_startPC);
-        rFile = new RegisterFile();
         mainMemory = memory;
+        coreNumber = coreNumber_;
         Simulator.registerComponent(this);
     }
 
@@ -80,6 +83,7 @@ public class ProcessorCore implements ComponentInterface {
                     mainMemory.enqueueMemoryInstruction(fetchInstruction);
                 } else if (fetchInstructionCompleted) {
                     instruction = AbstractInstruction.byteArrayToInt(fetchInstruction.getOutData());
+                    System.out.println("GOT INSTRUCTION \n" + AbstractInstruction.zeroPadIntForString(instruction, 32) + "\n\n\n");
                     fetchInstruction = null;
                     currentState = ProcessingStates.decode;
                 }
@@ -88,8 +92,9 @@ public class ProcessorCore implements ComponentInterface {
                 abstrInstr = AbstractInstruction.getAbstractInstructionForInstruction(instruction);
                 if (abstrInstr.getType() == InstructionTypes.halt) {
                     currentState = ProcessingStates.halt;
+                } else {
+                    currentState = ProcessingStates.alu;
                 }
-                currentState = ProcessingStates.alu;
                 break;
             case alu:
                 if (abstrInstr.getType() == InstructionTypes.alu) {
@@ -101,6 +106,7 @@ public class ProcessorCore implements ComponentInterface {
                 if (abstrInstr.getType() == InstructionTypes.memory) {
                     if (memoryInstruction == null) {
                         memoryInstruction = ((MemoryInstructionInterface) abstrInstr).getMemoryInstruction(rFile);
+                        mainMemory.enqueueMemoryInstruction(memoryInstruction);
                     } else if (memoryInstructionCompleted) {
                         toWriteBack = memoryInstruction.getOutData();
                         currentState = ProcessingStates.writeback;
@@ -117,12 +123,13 @@ public class ProcessorCore implements ComponentInterface {
                     ((MemoryInstructionInterface) abstrInstr).handleWriteBack(toWriteBack, rFile);
                 }
                 rFile.incrementPC(32);
-                System.out.println("We have just finished executing: \n " + abstrInstr);
+                System.out.println("We have just finished executing:  in coreNumber #" + coreNumber+"\n " + abstrInstr.toString());
                 System.out.println(rFile);
-                System.out.println("-------------------------");
+                System.out.println("--------------------");
                 currentState = ProcessingStates.fetch;
+                break;
             case halt:
-                System.out.println("We have just halted the core \n " + abstrInstr);
+                System.out.println("We have just halted the core #" + coreNumber+" \n " + abstrInstr);
                 System.out.println(rFile);
                 System.out.println("-------------------------");
                 isHalted = true;

@@ -13,7 +13,7 @@ import org.cs533.newprocessor.Globals;
  */
 public class L2Cache extends FullyAssociativeCache {
 
-    public L2Cache(MainMemory mainMemory) {
-        super(Globals.L2_SIZE_IN_NUMBER_OF_LINES, Globals.L2_CACHE_LATENCY, mainMemory);
-    }
+//    public L2Cache(MainMemory mainMemory) {
+//        super(Globals.L2_SIZE_IN_NUMBER_OF_LINES, Globals.L2_CACHE_LATENCY, mainMemory);
+//    }
 }

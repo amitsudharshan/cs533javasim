@@ -5,7 +5,7 @@
 package org.cs533.newprocessor.components.memorysubsystem.l1cache;
 
 import java.util.concurrent.LinkedBlockingQueue;
-import org.cs533.newprocessor.components.memorysubsystem.l1cache.bus.CacheCoherenceBus.BusMessage;
+//import org.cs533.newprocessor.components.memorysubsystem.l1cache.bus.CacheCoherenceBus.BusMessage;
 
 /**
  *
@@ -36,9 +36,9 @@ public class L1Cache  { //implements ComponentInterface, MemoryInterface {
     These queues are used for communication on the Bus to L2 and between caches
      ************************ */
     /** this queue contains messages that we are sending out to the bus and can be read/written during runClock */
-    public LinkedBlockingQueue<BusMessage> outMessageQueue = new LinkedBlockingQueue<BusMessage>();
+//    public LinkedBlockingQueue<BusMessage> outMessageQueue = new LinkedBlockingQueue<BusMessage>();
     /** This queue contains messages that we recieve from the bus and can be polled only during runPrep */
-    public LinkedBlockingQueue<BusMessage> inMessageQueue = new LinkedBlockingQueue<BusMessage>();
+//    public LinkedBlockingQueue<BusMessage> inMessageQueue = new LinkedBlockingQueue<BusMessage>();
 //    /* *************************
 //    Here we store the internal state of the L1Cache
 //     ************************ */

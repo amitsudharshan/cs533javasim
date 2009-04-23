@@ -60,16 +60,17 @@ public class MainMemory implements ComponentInterface, MemoryInterface {
     }
 
     public void runMemoryInstruction() {
+        int byteAddress = toDo.getInAddress() / 8;
         if (toDo.getType() == InstructionType.Store) {
             int counter = 0;
-            for (int i = toDo.getInAddress(); i < toDo.getInData().length; i++) {
+            for (int i = byteAddress; i < toDo.getInData().length; i++) {
                 memory[i] = toDo.getInData()[counter++];
             }
         } else {
             toDo.outData = new byte[Globals.CACHE_LINE_SIZE];
             for (int i = 0; i < Globals.CACHE_LINE_SIZE; i++) {
-                if (toDo.getInAddress() + i < memory.length) {
-                    toDo.outData[i] = memory[toDo.getInAddress() + i];
+                if (byteAddress + i < memory.length) {
+                    toDo.outData[i] = memory[byteAddress + i];
                 }
             }
         }

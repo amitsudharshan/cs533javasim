@@ -46,7 +46,7 @@ public class Simulator {
         int[] pcStart = exec.getInitialPC();
         ProcessorCore[] pCore = new ProcessorCore[pcStart.length];
         for (int i = 0; i < pCore.length; i++) {
-            pCore[i] = new ProcessorCore(pcStart[i], memory);
+            pCore[i] = new ProcessorCore(pcStart[i], memory,i);
         }
         runSimulation();
         int doneProcessor = 0;
@@ -56,35 +56,33 @@ public class Simulator {
             }
             Thread.sleep(10);
         }
-
-
-
-    }
-
-    public static void testMemoryMain(String[] args) throws Exception {
-        L2Cache l2 = new L2Cache(new MainMemory());
-
-        MemoryInstruction[] instruction = new MemoryInstruction[4];//
-        for (int i = 0; i < instruction.length; i++) {
-            instruction[i] = MemoryInstruction.Store(i * 4, generateSimpleCacheLineFromOffset(i * 4));
-            l2.enqueueMemoryInstruction(instruction[i]);
-        }
-        runSimulation();
-        for (int i = 0; i < instruction.length; i++) {
-            while (!instruction[i].getIsCompleted()) {
-                Thread.sleep(1);
-            }
-        }
-        MemoryInstruction readInstr = MemoryInstruction.Load(0);
-        l2.enqueueMemoryInstruction(readInstr);
-        while (!readInstr.getIsCompleted()) {
-            Thread.sleep(1);
-        }
-        for (int i = 0; i < readInstr.getOutData().length; i++) {
-            System.out.println("FOR address = 0x" + Integer.toHexString(i + readInstr.getInAddress()) + " the value is = " + readInstr.getOutData()[i]);
-        }
         stopSimulation();
     }
+
+//    public static void testMemoryMain(String[] args) throws Exception {
+//        L2Cache l2 = new L2Cache(new MainMemory());
+//
+//        MemoryInstruction[] instruction = new MemoryInstruction[4];//
+//        for (int i = 0; i < instruction.length; i++) {
+//            instruction[i] = MemoryInstruction.Store(i * 4, generateSimpleCacheLineFromOffset(i * 4));
+//            l2.enqueueMemoryInstruction(instruction[i]);
+//        }
+//        runSimulation();
+//        for (int i = 0; i < instruction.length; i++) {
+//            while (!instruction[i].getIsCompleted()) {
+//                Thread.sleep(1);
+//            }
+//        }
+//        MemoryInstruction readInstr = MemoryInstruction.Load(0);
+//        l2.enqueueMemoryInstruction(readInstr);
+//        while (!readInstr.getIsCompleted()) {
+//            Thread.sleep(1);
+//        }
+//        for (int i = 0; i < readInstr.getOutData().length; i++) {
+//            System.out.println("FOR address = 0x" + Integer.toHexString(i + readInstr.getInAddress()) + " the value is = " + readInstr.getOutData()[i]);
+//        }
+//        stopSimulation();
+//    }
 
     public static void registerComponent(ComponentInterface component) {
         components.add(component);
@@ -92,7 +90,6 @@ public class Simulator {
 
     public static void stopSimulation() {
         simulatorThread.interrupt();
-
     }
 
     public static void runSimulation() {

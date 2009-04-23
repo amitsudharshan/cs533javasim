@@ -124,7 +124,7 @@ public class ThreeRegisterALUInstruction extends AbstractInstruction implements 
     }
 
     public void executeOperation(RegisterFile reg) {
-        if (functionCodeForInstruction.get(functionCode).equals("add")) {
+        if (aluFunctionCodes.get(functionCode).equals("add")) {
             int op1 = reg.getValueForRegister(registerSource1);
             int op2 = reg.getValueForRegister(registerSource2);
             reg.setValueForRegister(registerDestination, op1 + op2);
