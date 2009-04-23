@@ -4,7 +4,8 @@
  */
 
 package org.cs533.newprocessor.components.memorysubsystem;
-
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
@@ -55,34 +56,47 @@ public  class L1_MESI_Test
  
 
     
+    L1MESICacheLine[] myLines = new L1MESICacheLine[10];
+    for(int i = 0 ;  i <  10; i++)
+    {
+        myLines[i] = new L1MESICacheLine((rand.nextInt()%90), false);
+    }
      L1MESICacheLine x = null;
-     L1MESICacheLine[] myLines =  (L1MESICacheLine[]) L1Lines.values().toArray();
+     //L1MESICacheLine[] myLines =  (L1MESICacheLine[]) L1Lines.values().toArray();
+     // myLines = L1Lines.values().toArray(myLines);
+
      Iterator iter = L1Lines.values().iterator();
      System.out.println("beginning simulated events on state machine");
      int i = 0;
-   
+    int response;
          for(i = 0; i< myLines.length; i++)
          {
          System.out.println("Simulation: On the iteration " + i  );
         //models a producer-consumer pattern
-
+        if(myLines[i] != null)
+        {
         myLines[i].onMessage(2, Event.BusRead, 0, false, data);
+        System.out.println("Beginning series of writes...");
         myLines[i].onMessage(3, Event.PWrite, 0, true, data);
         myLines[i].onMessage(1, Event.PWrite, 0, false, data);
         myLines[i].onMessage(1, Event.PWrite, 0, false, data);
         myLines[i].onMessage(1, Event.PWrite, 0, false, data);
         myLines[i].onMessage(1, Event.PWrite, 0, false, data);
         myLines[i].onMessage(1, Event.PWrite, 0, false, data);
+        System.out.println("ending series of writes..");
         myLines[i].onMessage(1, Event.BusRead, 0, false, data);
         myLines[i].onMessage(3, Event.PWrite, 0, true, data);
         myLines[i].onMessage(3, Event.BusInvalidate, 0, true, data);
-        myLines[i].onMessage(4, Event.BusInvalidate, 0, false, data);
-        System.out.println("ending iteration"+ i);
+        response = myLines[i].onMessage(4, Event.BusInvalidate, 0, false, data);
+    
+        }
+             System.out.println("ending iteration"+ i);
          }
      for(i = 0; i< myLines.length; i++)
       {  
-        System.out.println("The "+ i +  " th iteration gives" + myLines[i].toString());
-      }
+        //System.out.println("The "+ i +  " th iteration gives" + myLines[i].toString());
+        System.out.println("Data in cache line " + i+ " ----> " + myLines[i].getData());
+       }
   }
 
 
