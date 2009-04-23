@@ -34,6 +34,10 @@ public class OpcodeMetaData {
         HashMap<Integer, AbstractInstruction> instructionAssembler = new HashMap<Integer, AbstractInstruction>();
         HashMap<String, AbstractInstruction> opCodeMap = populateOpCodeAssemblerMap();
         for (AbstractInstruction instr : opCodeMap.values()) {
+            if (instructionAssembler.containsKey(instr.getOpcode())) {
+                throw new java.lang.RuntimeException("MULTIPLE OPCODES FOR " +
+                        "ONE INSTRUCTION! for " + instr.toString());
+            }
             instructionAssembler.put(instr.getOpcode(), instr);
         }
         return instructionAssembler;
