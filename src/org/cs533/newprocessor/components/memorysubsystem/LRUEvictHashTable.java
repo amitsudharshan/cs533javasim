@@ -40,7 +40,7 @@ public class LRUEvictHashTable<T extends CacheLine> extends LinkedHashMap<Intege
         line = null;
     }
 
-    void add(L1MESI newCacheLine) {
+    void add(L1MESICacheLine newCacheLine) {
 
     }
 }
