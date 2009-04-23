@@ -24,6 +24,10 @@ public class L1Cache implements ComponentInterface {
        //
     }
 
+    L1Cache() {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
     public void runPrep()
     {
         throw new UnsupportedOperationException("Not supported yet.");
