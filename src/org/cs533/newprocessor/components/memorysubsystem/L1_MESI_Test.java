@@ -16,7 +16,7 @@ import org.cs533.newprocessor.components.memorysubsystem.L1MESI.Event;
 public  class L1_MESI_Test
 {
 
-    L1Cache myL1Cache = new L1Cache(null, null);
+    L1Cache myL1Cache = new L1Cache(, );
     Random rand = new Random();
     LRUEvictHashTable<CacheLine> L1Lines =  new LRUEvictHashTable(10);
  
@@ -72,5 +72,13 @@ public  class L1_MESI_Test
       }
   }
 
+
+  public static void main(String[] args)
+  {
+      System.out.println("beginning test for L1_MESI_Test");
+      L1_MESI_Test testL1 = new L1_MESI_Test(17);
+      
+      System.out.println("completed test");
+  }
 }
 
