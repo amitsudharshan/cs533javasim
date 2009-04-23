@@ -10,9 +10,8 @@ import java.util.logging.Logger;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
 import org.cs533.newprocessor.components.core.ProcessorCore;
-import org.cs533.newprocessor.components.memorysubsystem.l2cache.L2Cache;
 import org.cs533.newprocessor.components.memorysubsystem.MainMemory;
-import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
+import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
 
 /**
  *
@@ -42,7 +41,7 @@ public class Simulator {
             imageFileName = args[0];
         }
         ExecutableImage exec = ExecutableImage.loadImageFromFile(imageFileName);
-        MainMemory memory = new MainMemory(exec.getMemoryImage());
+        MemoryInterface memory = new MainMemory(exec.getMemoryImage());
         int[] pcStart = exec.getInitialPC();
         ProcessorCore[] pCore = new ProcessorCore[pcStart.length];
         for (int i = 0; i < pCore.length; i++) {
