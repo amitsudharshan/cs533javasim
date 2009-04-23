@@ -20,28 +20,30 @@ public class MemoryInstruction {
     int type_flags;
     int inAddress;
     byte[] inData;
+    byte[] compareData;
     boolean isCompleted;
 
     /* output ports */
     byte[] outData;
 
     public static MemoryInstruction Load(int inAddress) {
-        return new MemoryInstruction(inAddress, null, InstructionType.Load);
+        return new MemoryInstruction(inAddress,null, null, InstructionType.Load);
     }
 
     public static MemoryInstruction Store(int inAddress, byte[] data) {
-        return new MemoryInstruction(inAddress, data, InstructionType.Store);
+        return new MemoryInstruction(inAddress, null,data, InstructionType.Store);
     }
     
-    public static MemoryInstruction CompareAndSwap(int inAddress, byte[] data) {
-        return new MemoryInstruction(inAddress,data,InstructionType.CAS);
+    public static MemoryInstruction CompareAndSwap(int inAddress, byte[] compareData ,byte[] swapData) {
+        return new MemoryInstruction(inAddress,compareData,swapData,InstructionType.CAS);
     }
 
-    protected MemoryInstruction(int inAddress, byte[] data, InstructionType type) {
+    protected MemoryInstruction(int inAddress, byte[] compareData,byte[] data, InstructionType type) {
         this.type = type;
         this.type_flags = 0;
         this.inAddress = inAddress;
         this.inData = data;
+        this.compareData = compareData;
         this.outData = null;
         this.isCompleted = false;
     }
