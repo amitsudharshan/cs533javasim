@@ -14,6 +14,13 @@ public class CacheLine {
     public boolean shared;
     public int state;
 
+     public CacheLine()
+     {
+      data = 0;
+      this.state =2;
+      this.shared = false;
+     }
+
     public CacheLine(int _data, boolean _shared)
     {
         data = _data;
