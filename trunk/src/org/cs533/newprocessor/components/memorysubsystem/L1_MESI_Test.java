@@ -38,7 +38,7 @@ public  class L1_MESI_Test
       for (int i = 0; i<10; i++)
     {
      System.out.println("creating new cache lines");
-     newCacheLine = new L1MESICacheLine((rand.nextInt()%90), false) ;
+     newCacheLine = new L1MESICacheLine((rand.nextInt()%90), false);
     L1Lines.add(newCacheLine);
     if(newCacheLine != null)
     {
