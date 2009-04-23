@@ -2,25 +2,24 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.cs533.newprocessor.assembler.instructionTypes;
+package org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions;
 
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;
 import org.cs533.newprocessor.assembler.abstractandinterface.MemoryInstructionInterface;
 import org.cs533.newprocessor.components.core.RegisterFile;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
+import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction.InstructionType;
 
 /**
- * This class contains a store instruction implemenation
- * So far this instruction will only support store from register source into
- * register destiation.
- * It takes instructions of the form: sw r1 r2 which will place the
- * contents of r2 in the memory location at address r1.
+ *these can handle load instructions of the form
+ * lw r1 r2 which loads into r2 the value of memory at r1
+ * it can also load
  * @author amit
  */
-public class StoreWordInstruction extends AbstractInstruction implements MemoryInstructionInterface {
+public class LoadWordInstruction extends AbstractInstruction implements MemoryInstructionInterface {
 
-    static final int opcode = 0x2B;
-    static final InstructionTypes type = InstructionTypes.memory;
+    public static int opcode = 0x23;
+    public static InstructionTypes type = InstructionTypes.memory;
     static final int addressRegMask = 0x03E00000;
     static final int contentRegMask = 0x001F0000;
     static final int addressRegShift = 21;
@@ -29,17 +28,16 @@ public class StoreWordInstruction extends AbstractInstruction implements MemoryI
     int registerContent;
     int registerAddress;
 
-    public StoreWordInstruction() {
+    public LoadWordInstruction() {
     }
 
-    public StoreWordInstruction(int instruction) {
-        this();
+    public LoadWordInstruction(int instruction) {
         setRegisters(instruction);
     }
 
     @Override
     public AbstractInstruction getAbstractInstruction(int instruction) {
-        return new StoreWordInstruction(instruction);
+        return new LoadWordInstruction(instruction);
     }
 
     public void setRegisters(int instruction) {
@@ -47,18 +45,9 @@ public class StoreWordInstruction extends AbstractInstruction implements MemoryI
         registerContent = (instruction & contentRegMask) >> contentRegShift;
     }
 
-    public static void main(String[] args) {
-        StoreWordInstruction store = new StoreWordInstruction();
-        int instr = store.assembleInstruction("store r2 r3");
-        System.out.println("THE INSTRUCTION IS : " + store.zeroPadIntForString(instr, 32));
-        store = new StoreWordInstruction(instr);
-        System.out.println(store);
-
-    }
-
     @Override
     public String toString() {
-        return "This is a store instruction \n with " +
+        return "This is a load instruction \n with " +
                 "registerAddress = " + registerAddress + " " +
                 "and registerContent = " + registerContent;
     }
@@ -75,23 +64,14 @@ public class StoreWordInstruction extends AbstractInstruction implements MemoryI
         instr |= reg1 << addressRegShift;
         instr |= reg2 << contentRegShift;
         return instr;
-
     }
 
-    /**
-     * This method will return a memoryinstruction which contains the address
-     * and value to store.
-     * @param rFile The registerfile
-     * @return the memory instruction to send to memory
-     */
     public MemoryInstruction getMemoryInstruction(RegisterFile rFile) {
-        int address = rFile.getValueForRegister(registerAddress);
-        byte[] toStore = intToByteArray(rFile.getValueForRegister(registerContent));
-        return MemoryInstruction.Store(address, toStore);
+        return MemoryInstruction.Load(rFile.getValueForRegister(registerAddress));
     }
 
     public void handleWriteBack(byte[] toWriteBack, RegisterFile rFile) {
-        return;
+        rFile.setValueForRegister(registerContent, byteArrayToInt(toWriteBack));
     }
 
     @Override

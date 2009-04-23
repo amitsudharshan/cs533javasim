@@ -4,6 +4,7 @@
  */
 package org.cs533.newprocessor.components.memorysubsystem;
 
+import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
@@ -63,14 +64,27 @@ public class MainMemory implements ComponentInterface, MemoryInterface {
         int byteAddress = toDo.getInAddress() / 8;
         if (toDo.getType() == InstructionType.Store) {
             int counter = 0;
-            for (int i = byteAddress; i < toDo.getInData().length; i++) {
+            for (int i = byteAddress; i < toDo.getInData().length+byteAddress; i++) {
                 memory[i] = toDo.getInData()[counter++];
             }
-        } else {
+        } else if (toDo.getType() == InstructionType.Load) {
             toDo.outData = new byte[Globals.CACHE_LINE_SIZE];
             for (int i = 0; i < Globals.CACHE_LINE_SIZE; i++) {
                 if (byteAddress + i < memory.length) {
                     toDo.outData[i] = memory[byteAddress + i];
+                }
+            }
+        } else if (toDo.getType() == InstructionType.CAS) {
+            toDo.outData = new byte[Globals.CACHE_LINE_SIZE];
+            for (int i = 0; i < Globals.CACHE_LINE_SIZE; i++) {
+                if (byteAddress + i < memory.length) {
+                    toDo.outData[i] = memory[byteAddress + i];
+                }
+            }
+            if (Arrays.equals(toDo.compareData, toDo.getOutData())) {
+                int counter = 0;
+                for (int i = byteAddress; i < toDo.getInData().length+byteAddress; i++) {
+                    memory[i] = toDo.getInData()[counter++];
                 }
             }
         }

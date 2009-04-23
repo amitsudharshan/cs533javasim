@@ -5,11 +5,12 @@
 package org.cs533.newprocessor.components.core;
 
 import org.cs533.newprocessor.ComponentInterface;
+import org.cs533.newprocessor.Globals;
 import org.cs533.newprocessor.assembler.abstractandinterface.ALUInstructionInterface;
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction.InstructionTypes;
+import org.cs533.newprocessor.assembler.abstractandinterface.BranchInstructionInterface;
 import org.cs533.newprocessor.assembler.abstractandinterface.MemoryInstructionInterface;
-import org.cs533.newprocessor.components.memorysubsystem.MainMemory;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
 import org.cs533.newprocessor.simulator.Simulator;
@@ -122,14 +123,18 @@ public class ProcessorCore implements ComponentInterface {
                 if (abstrInstr.getType() == InstructionTypes.memory) {
                     ((MemoryInstructionInterface) abstrInstr).handleWriteBack(toWriteBack, rFile);
                 }
-                rFile.incrementPC(32);
-                System.out.println("We have just finished executing:  in coreNumber #" + coreNumber+"\n " + abstrInstr.toString());
+                if (abstrInstr.getType() == InstructionTypes.branch) {
+                    ((BranchInstructionInterface)abstrInstr).setPC(rFile);
+                } else {
+                    rFile.incrementPC(8*Globals.WORD_SIZE);
+                }
+                System.out.println("We have just finished executing:  in coreNumber #" + coreNumber + " with PC value 0x" + Integer.toHexString(rFile.getPC())+" \n " + abstrInstr.toString());
                 System.out.println(rFile);
                 System.out.println("--------------------");
                 currentState = ProcessingStates.fetch;
                 break;
             case halt:
-                System.out.println("We have just halted the core #" + coreNumber+" \n " + abstrInstr);
+                System.out.println("We have just halted the core #" + coreNumber + " \n " + abstrInstr);
                 System.out.println(rFile);
                 System.out.println("-------------------------");
                 isHalted = true;
