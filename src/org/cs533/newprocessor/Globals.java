@@ -10,7 +10,7 @@ package org.cs533.newprocessor;
  */
 public class Globals {
 
-    public static final int WORD_SIZE = 2; // 2 byte words
+    public static final int WORD_SIZE =4; // 4 byte words
     public static final int TOTAL_MEMORY_SIZE = 512*1024; // 512KB memory
     public static final int CACHE_LINE_SIZE = 4; // 32bit line size
     public static final int L2_SIZE_IN_NUMBER_OF_LINES = 32768/CACHE_LINE_SIZE; // roughly 6% of TOTAL_MEMORY_SIZE

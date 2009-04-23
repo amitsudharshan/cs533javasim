@@ -21,7 +21,7 @@ public class L1Cache implements ComponentInterface {
     public L1Cache(ProcessorCore _core, CacheCoherenceBus _bus) {
         bus = _bus;
         core = _core;
-        bus.registerCache(this);
+       //
     }
 
     public void runPrep()

@@ -59,6 +59,7 @@ public class Assembler {
             int[] pcInitValues = new int[a.pcStart.size()];
             for (int i = 0; i < pcInitValues.length; i++) {
                 pcInitValues[i] = a.pcStart.get(i);
+                System.out.println("PC INIT VALUE IS " + pcInitValues[i]);
             }
 
             writeImageToFile(new ExecutableImage(a.createMemoryForImage(), pcInitValues), outputFile);
@@ -69,32 +70,33 @@ public class Assembler {
 
     public void processLine(String line) {
         String[] split = line.split(" ");
-        if (split[0].equals("") || line.startsWith("//")) {
+        if (split.length<1 || split[0].equals("") || line.startsWith("//")) {
+            // these lines should be ignored they are blank or comments
             return;
         }
         switch (currentSection) {
             case start:
-                if (split[0].equals("#data")) {
+                if (split[0].equals(".data")) {
                     currentSection = Sections.data;
                 } else {
                     throw new java.lang.RuntimeException("ERROR FILE MUST START WITH data section");
                 }
                 break;
             case data:
-                if (split[0].equals("#instructions")) {
+                if (split[0].equals(".instructions")) {
                     currentSection = Sections.instructions;
-                    labelToAddressMap.put(split[0], nextAddress);
                 } else if (split[0].startsWith("$")) {
                     variableToAddressMap.put(split[0], nextAddress);
-                    int value = Integer.decode(split[1]);
-                    memoryImage.add(value);
-                    nextAddress += Globals.WORD_SIZE * 8;
+                    long value = Long.decode(split[1]);
+                    int toAdd = (int)(value & 0xFFFFFFFF);
+                    memoryImage.add(toAdd);
+                    nextAddress = nextAddress + (Globals.WORD_SIZE * 8);
                 } else {
                     throw new java.lang.RuntimeException("in data state found non matching instruction for line \n " + line);
                 }
                 break;
             case instructions:
-                if (split[0].equals("#startpc")) {
+                if (split[0].equals(".startpc")) {
                     currentSection = Sections.pcinit;
                 } else if (split[0].startsWith("#")) {
                     labelToAddressMap.put(split[0], nextAddress);
@@ -104,7 +106,7 @@ public class Assembler {
                         throw new java.lang.RuntimeException("found an invalid instruction");
                     } else {
                         memoryImage.add(instruction);
-                        nextAddress += Globals.WORD_SIZE * 8;
+                        nextAddress = nextAddress + (Globals.WORD_SIZE * 8);
                     }
                 }
                 break;

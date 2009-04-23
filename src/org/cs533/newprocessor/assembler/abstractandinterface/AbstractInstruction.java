@@ -13,9 +13,10 @@ import org.cs533.newprocessor.assembler.OpcodeMetaData;
  */
 public abstract class AbstractInstruction {
 
-    public static final int OP_CODE_MASK = 0xF9000000;
+    public static final int OP_CODE_MASK = 0xFC000000;
     public static final int OP_CODE_SHIFT = 26;
     public static final int LOWER_16_IMMEDIATE_MASK = 0x0000FFFF;
+    public static final int LONG_INTEGER_UNSIGNED_MASK = 0xFFFFFFFF;
     public static final HashMap<Integer, AbstractInstruction> instructionMap = OpcodeMetaData.populateInstructionAssemblerMap();
 
     public enum InstructionTypes {
@@ -75,12 +76,23 @@ public abstract class AbstractInstruction {
     }
 
     public static AbstractInstruction getAbstractInstructionForInstruction(int instruction) {
-        int newInstr = instruction & OP_CODE_MASK;
+        long newInstr = instruction & 0xffffffffL;
+        newInstr = (newInstr) & OP_CODE_MASK;
         newInstr = newInstr >> OP_CODE_SHIFT;
-        return instructionMap.get(newInstr).getAbstractInstruction(instruction);
+        int intInstr = (int) (newInstr & LONG_INTEGER_UNSIGNED_MASK);
+        try {
+            return instructionMap.get(intInstr).getAbstractInstruction(instruction);
+        } catch (NullPointerException ex) {
+            ex.printStackTrace();
+            throw (ex);
+        }
     }
 
     public static void main(String[] args) {
-        System.out.println("AbstractInstruction");
+        long instruction = 0xFC000000& 0xffffffffL;
+        long newInstrLong = instruction & OP_CODE_MASK;
+        System.out.println(zeroPadIntForString((int) newInstrLong, 32));
+        newInstrLong = newInstrLong >> 26;
+        System.out.println(newInstrLong);
     }
 }
