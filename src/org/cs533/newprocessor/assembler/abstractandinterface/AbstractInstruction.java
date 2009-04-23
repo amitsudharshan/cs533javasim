@@ -38,8 +38,13 @@ public abstract class AbstractInstruction {
     }
 
     public int parseImmediate(String imm) {
-
-        int toReturn = Integer.decode(imm.substring(1));
+        int offset = 1;
+        if(imm.charAt(0)=='0') {
+            offset =0;
+        }
+        long decoded = Long.decode(imm.substring(offset));
+        decoded = decoded & 0xFFFFFFFF;
+        int toReturn = (int)decoded;
         if (imm.charAt(0) == 'U') {
             toReturn = toReturn >> 16; //move the
         }

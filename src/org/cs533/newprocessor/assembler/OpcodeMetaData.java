@@ -6,12 +6,16 @@ package org.cs533.newprocessor.assembler;
 
 import java.util.HashMap;
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;
-import org.cs533.newprocessor.assembler.instructionTypes.ALUImmediateInstructions.OrImmediateInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.ALUInstructions.ALUImmediateInstructions.AddImmediateInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.ALUInstructions.ALUImmediateInstructions.OrImmediateInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.CompareAndSwapInstruction;
 import org.cs533.newprocessor.assembler.instructionTypes.HaltInstruction;
-import org.cs533.newprocessor.assembler.instructionTypes.LoadUpperImmediateInstruction;
-import org.cs533.newprocessor.assembler.instructionTypes.LoadWordInstruction;
-import org.cs533.newprocessor.assembler.instructionTypes.StoreWordInstruction;
-import org.cs533.newprocessor.assembler.instructionTypes.ThreeRegisterALUInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.ALUInstructions.LoadUpperImmediateInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.LoadWordInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.StoreWordInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.ALUInstructions.ThreeRegisterALUInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.BranchIfEqualInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.BranchIfLessThanOrEqualToInstruction;
 
 /**
  *
@@ -22,10 +26,14 @@ public class OpcodeMetaData {
     public static HashMap<String, AbstractInstruction> populateOpCodeAssemblerMap() {
         HashMap<String, AbstractInstruction> opCodeToAssemblerMap = new HashMap<String, AbstractInstruction>();
         opCodeToAssemblerMap.put("add", new ThreeRegisterALUInstruction());
+        opCodeToAssemblerMap.put("addi", new AddImmediateInstruction());
         opCodeToAssemblerMap.put("ori", new OrImmediateInstruction());
         opCodeToAssemblerMap.put("lui", new LoadUpperImmediateInstruction());
         opCodeToAssemblerMap.put("sw", new StoreWordInstruction());
         opCodeToAssemblerMap.put("lw", new LoadWordInstruction());
+        opCodeToAssemblerMap.put("cas", new CompareAndSwapInstruction());
+        opCodeToAssemblerMap.put("beq", new BranchIfEqualInstruction());
+        opCodeToAssemblerMap.put("bleq", new BranchIfLessThanOrEqualToInstruction());
         opCodeToAssemblerMap.put("halt", new HaltInstruction());
         return opCodeToAssemblerMap;
     }

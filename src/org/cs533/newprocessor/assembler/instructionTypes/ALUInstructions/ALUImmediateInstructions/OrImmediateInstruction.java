@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.cs533.newprocessor.assembler.instructionTypes.ALUImmediateInstructions;
+package org.cs533.newprocessor.assembler.instructionTypes.ALUInstructions.ALUImmediateInstructions;
 
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractALUImmediateInstruction;
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;

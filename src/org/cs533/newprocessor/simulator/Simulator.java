@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
+import org.cs533.newprocessor.assembler.Assembler;
 import org.cs533.newprocessor.components.core.ProcessorCore;
 import org.cs533.newprocessor.components.memorysubsystem.MainMemory;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
@@ -36,11 +37,12 @@ public class Simulator {
     }
 
     public static void main(String[] args) throws Exception {
-        String imageFileName = "/home/amit/asm/a.out";
+        String asmFileName = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/cands.asm";
         if (args.length > 0) {
-            imageFileName = args[0];
+            asmFileName = args[0];
         }
-        ExecutableImage exec = ExecutableImage.loadImageFromFile(imageFileName);
+     //   ExecutableImage exec = ExecutableImage.loadImageFromFile(imageFileName);
+        ExecutableImage exec = Assembler.getFullImage(asmFileName);
         MemoryInterface memory = new MainMemory(exec.getMemoryImage());
         int[] pcStart = exec.getInitialPC();
         ProcessorCore[] pCore = new ProcessorCore[pcStart.length];
