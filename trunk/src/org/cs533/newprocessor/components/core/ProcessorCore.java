@@ -93,6 +93,10 @@ public class ProcessorCore implements ComponentInterface {
                 abstrInstr = AbstractInstruction.getAbstractInstructionForInstruction(instruction);
                 if (abstrInstr.getType() == InstructionTypes.halt) {
                     currentState = ProcessingStates.halt;
+                } else if (abstrInstr.getType() == InstructionTypes.alu) {
+                    currentState = ProcessingStates.alu;
+                } else if (abstrInstr.getType() == InstructionTypes.memory) {
+                    currentState = ProcessingStates.memory;
                 } else {
                     currentState = ProcessingStates.alu;
                 }
@@ -124,21 +128,24 @@ public class ProcessorCore implements ComponentInterface {
                     ((MemoryInstructionInterface) abstrInstr).handleWriteBack(toWriteBack, rFile);
                 }
                 if (abstrInstr.getType() == InstructionTypes.branch) {
-                    ((BranchInstructionInterface)abstrInstr).setPC(rFile);
+                    ((BranchInstructionInterface) abstrInstr).setPC(rFile);
                 } else {
-                    rFile.incrementPC(8*Globals.WORD_SIZE);
+                    rFile.incrementPC(8 * Globals.WORD_SIZE);
                 }
-                System.out.println("We have just finished executing:  in coreNumber #" + coreNumber + " with PC value 0x" + Integer.toHexString(rFile.getPC())+" \n " + abstrInstr.toString());
+                System.out.println("We have just finished executing:  in coreNumber #" + coreNumber + " with PC value 0x" + Integer.toHexString(rFile.getPC()) + " \n " + abstrInstr.toString());
                 System.out.println(rFile);
                 System.out.println("--------------------");
                 currentState = ProcessingStates.fetch;
                 break;
             case halt:
-                System.out.println("We have just halted the core #" + coreNumber + " \n " + abstrInstr);
-                System.out.println(rFile);
-                System.out.println("-------------------------");
+                if (!isHalted) {
+                    System.out.println("We have just halted the core #" + coreNumber + " \n " + abstrInstr);
+                    System.out.println(rFile);
+                    System.out.println("-------------------------");
+                }
                 isHalted = true;
                 break;
+
         }
     }
 }

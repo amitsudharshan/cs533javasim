@@ -61,8 +61,14 @@ public abstract class AbstractBranchInstruction extends AbstractInstruction impl
         int toReturn = 0;
         String[] split = instruction.split(" ");
         int regOne = getIntForRegisterName(split[1]);
-        int regTwo = getIntForRegisterName(split[2]);
-        int lbl = parseImmediate(split[3]);
+        int labelIndex = 2;
+        int regTwo = 0;
+        if (split.length == 4) {
+            //if branch has two regesters (only useful for beq)
+            regTwo = getIntForRegisterName(split[2]);
+            labelIndex = 3;
+        }
+        int lbl = parseImmediate(split[labelIndex]);
         toReturn |= opcode << AbstractInstruction.OP_CODE_SHIFT;
         toReturn |= regOne << regOneShift;
         toReturn |= regTwo << regTwoShift;
