@@ -13,8 +13,41 @@ import org.cs533.newprocessor.components.memorysubsystem.CacheLine;
 public class L1MESICacheLine extends CacheLine
 {
 
+      //public L1LineStates currentState;
+    public int state;//1: Dirty 2: Exclusive 3: Shared 4: Invalid
+    public int action;
+    public int event;
+    public int data;
+    //public byte[] address;
     private boolean valid = false;
     private boolean dirty = false;
+
+    public L1MESICacheLine(int _data, boolean shared)
+    {
+        super(_data, shared);
+        data = _data;  
+        this.valid = true;
+        this.dirty = false;
+    }
+
+
+    public L1MESICacheLine(int _address, int _data)
+    {
+
+      super(_address, _data, 2);
+      this.state = 2;
+
+    }
+
+      public L1MESICacheLine(int _address, int _data, int _processor)
+    {
+      super(_address, _data, 2, _processor);
+      this.processor = _processor;
+      this.valid = true;
+      this.dirty = false;
+    }
+
+
 
     public L1MESICacheLine() {
         this.data = 0;
@@ -42,71 +75,48 @@ public class L1MESICacheLine extends CacheLine
      {
          updateMM, requestUpdate
      }
-    //public L1LineStates currentState;
-    public int state;//1: Dirty 2: Exclusive 3: Shared 4: Invalid
-    public int action;
-    public int event;
-    public int data;
-    //public byte[] address;
-
+  
 
      public enum L1LineStates {
 
        EXCL, Invalid, Dirty, Shared
      }
 
-    public L1MESICacheLine(int i, boolean b)
-    {
-        super(i,b);
-         data = i;
-         b = false;
-
-    }
-
-
-    public L1MESICacheLine(int data, int state)
-    {
     
-      super(data, state);
-      this.data = data;
-      this.state = state;
-
-    }
-
-
     // register memory as a client of bus
 
     // response = onMessage(currState, event);
 
-    public int onMessage( Event event,  int data )
+    public int onMessage( Event event, int _address,  int _data )
     {
        if(event == Event.BusInvalidate)
        {
-            state = busInvalidate(state, shared);
+            state = busInvalidate(state, this.cache_entry.shared);
        }
        else if(event == Event.BusRead)
        {
-           state = busRead(state, shared);
+           state = busRead(state, _address, cache_entry.shared);
        }
 
        else if(event == Event.BusWrite)
        {
-          state = busWriteMiss(state, shared);
+          state = busWriteMiss(state, _address, cache_entry.shared);
        }
        else if(event == Event.PRead)
        {
-           state = pRead(state, shared, data);
+           state = pRead(state, _address, _data);
+
        }
        else if(event == Event.PWrite)
        {
-           state = pWrite(state,  shared, data);
+           state = pWrite(state, _address, cache_entry.shared, _data);
 
        }
       return state;
     }
 
 
-
+    //Begin MESI  protocol state machine
     public int busInvalidate(int currentState, boolean shared)
     {
         if(currentState == 3)
@@ -114,39 +124,50 @@ public class L1MESICacheLine extends CacheLine
             state = 4;
             this.setValidBit(true);
         }
+         System.out.println("Processor #" + this.processor + ":   " +  currentState + " --> "  + state);
         return state;
     }
 
-    public int busRead(int currentState, boolean shared)
+   //need to return the data for the external processor's cache line
+    public int busRead(int currentState, int address, boolean shared)
     {
         state = 3;
         this.setDirtyBit(false);
-        shared = true;
+        cache_entry.shared = true;  //global
+         System.out.println("Processor #" + this.processor + ":   " +  currentState + " --> "  + state);
         return state;
     }
-    public int pWrite(int currentState, boolean shared, int data)
+
+
+    public int pWrite(int currentState, int address, boolean shared, int data)
     {
         switch(currentState)
         {
             case 2-4:
                 state = 1;
+                this.cache_entry.address = address;
+                this.cachetag = address%4;//some arbitrary hash for now
                 setData(data);
                 this.setDirtyBit(true);
                 break;
             default:
+               state = 1;
+               this.cache_entry.address = address;
                setData(data);
                this.setDirtyBit(true);
-                break;
+               break;
         }
 
+        System.out.println("Processor #" + this.processor + ":   " +  currentState + " --> "  + state);
         return state;
     }
 
-    private boolean someOneElseHasIt( )
+    private boolean someOneElseHasIt()
     {
-       return shared;
+       return cache_entry.shared;
     }
-    public int busWriteMiss(int currentState, boolean shared)
+
+    public int busWriteMiss(int currentState, int address, boolean shared)
     {
       switch(currentState)
         {
@@ -158,6 +179,8 @@ public class L1MESICacheLine extends CacheLine
                  this.setValidBit(false);
               break;
         }
+
+       System.out.println("Processor #" + this.processor + ":   " +  currentState + " --> "  + state);
        return state;
      }
 
@@ -165,45 +188,50 @@ public class L1MESICacheLine extends CacheLine
     public int busRead(int currentState, int shared )
     {
         this.state = 3;
+         System.out.println("Processor #" + this.processor + ":   " +  currentState + " --> "  + state);
         return state;
     }
 
 
-    public int pRead(int currentState, boolean shared, int newlyReadData)
+     //Example:  LD  $R1, M[$R2]
+
+    public int pRead(int currentState, int address, int newlyReadData)
     {
+
+        this.cache_entry.address = address;
+        this.setData(newlyReadData);
         switch (currentState)
         {
             case 0:
                  if(someOneElseHasIt())
                  {
                      state = 3;
-                     this.setData(newlyReadData);
                  }
                  else
+                 {
                      state = 2;
-                break;
+                 }
+                 break;
 
             case 4:
-
-              if(shared)
-                 {currentState=3;}
+              if(someOneElseHasIt())
+                 {state=3;}
               else
-                {currentState = 2;}
+                {state = 2;}
               break;
 
             default:
                 break;
-     }
+        }
+         System.out.println("Processor #" + this.processor + ":   " +  currentState + " --> "  + state);
         return state;
    }
-
 
 
     public void setCurrentState(L1LineStates state)
     {
         this.state = state.ordinal();
     }
-
 
     public int getCurrentState()
     {
