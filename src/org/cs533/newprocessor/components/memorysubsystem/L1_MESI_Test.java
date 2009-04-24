@@ -33,8 +33,6 @@ public  class L1_MESI_Test
       if(newCacheLine != null)
          System.out.println(newCacheLine.toString());
 
-
-
   //do many differnt instructions at this...\
       for (int i = 0; i<10; i++)
     {
@@ -53,9 +51,7 @@ public  class L1_MESI_Test
     }
 
      System.out.println("created all the cache lines successfully");
- 
-
-    
+     
     L1MESICacheLine[] myLines = new L1MESICacheLine[10];
     for(int i = 0 ;  i <  10; i++)
     {
@@ -69,6 +65,12 @@ public  class L1_MESI_Test
      System.out.println("beginning simulated events on state machine");
      int i = 0;
     int response;
+    int data2 = 7;
+    int data3 = 11;
+    int data4 = 13;
+    int data5 = 17;
+    int data6 = 19;
+
          for(i = 0; i< myLines.length; i++)
          {
          System.out.println("Simulation: On the iteration " + i  );
@@ -77,18 +79,17 @@ public  class L1_MESI_Test
         {
         myLines[i].onMessage(2, Event.BusRead, 0, false, data);
         System.out.println("Beginning series of writes...");
-        myLines[i].onMessage(3, Event.PWrite, 0, true, data);
-        myLines[i].onMessage(1, Event.PWrite, 0, false, data);
-        myLines[i].onMessage(1, Event.PWrite, 0, false, data);
-        myLines[i].onMessage(1, Event.PWrite, 0, false, data);
-        myLines[i].onMessage(1, Event.PWrite, 0, false, data);
-        myLines[i].onMessage(1, Event.PWrite, 0, false, data);
+        myLines[i].onMessage(3, Event.PWrite, 0, true, data2);
+        myLines[i].onMessage(1, Event.PWrite, 0, false, data3);
+        myLines[i].onMessage(1, Event.PWrite, 0, false, data4);
+        myLines[i].onMessage(1, Event.PWrite, 0, false, data5);
+        myLines[i].onMessage(1, Event.PWrite, 0, false, data6);
+        myLines[i].onMessage(1, Event.PWrite, 0, false, data6);
         System.out.println("ending series of writes..");
         myLines[i].onMessage(1, Event.BusRead, 0, false, data);
-        myLines[i].onMessage(3, Event.PWrite, 0, true, data);
-        myLines[i].onMessage(3, Event.BusInvalidate, 0, true, data);
-        response = myLines[i].onMessage(4, Event.BusInvalidate, 0, false, data);
-    
+        myLines[i].onMessage(3, Event.PWrite, 0, true, data6);
+        myLines[i].onMessage(3, Event.BusInvalidate, 0, true, data6);
+        response = myLines[i].onMessage(4, Event.BusInvalidate, 0, false, data6);
         }
              System.out.println("ending iteration"+ i);
          }

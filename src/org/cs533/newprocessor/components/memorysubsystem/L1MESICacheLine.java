@@ -13,15 +13,33 @@ import org.cs533.newprocessor.components.memorysubsystem.CacheLine;
 public class L1MESICacheLine extends CacheLine
 {
 
+    private boolean valid = false;
+    private boolean dirty = false;
     public L1MESICacheLine() {
         this.data = 0;
         this.state = 2;
-        
+        this.valid = true;
+        this.dirty = true;
+    }
+
+
+    public void setValidBit(boolean b) {
+         this.valid = b;
+
+    }
+
+    private void setDirtyBit(boolean b) {
+        this.dirty = b;
     }
 
      public enum Event
      {
         BusRead, BusWrite, PRead, PWrite, BusInvalidate
+     }
+     
+     public enum Action
+     {
+         updateMM, requestUpdate
      }
     //public L1LineStates currentState;
     public int state;//1: Dirty 2: Exclusive 3: Shared 4: Invalid
@@ -91,13 +109,17 @@ public class L1MESICacheLine extends CacheLine
     public int busInvalidate(int currentState, int status, boolean shared)
     {
         if(currentState == 3)
+        {
             state = 4;
+            this.setValidBit(true);
+        }
         return action;
     }
 
     public int busRead(int currentState, int status, boolean shared)
     {
         state = 3;
+        this.setDirtyBit(false);
         return action;
     }
     public int pWrite(int currentState, int status, boolean shared, int data)
@@ -109,6 +131,7 @@ public class L1MESICacheLine extends CacheLine
                 setData(data);
                 break;
             default:
+               setData(data);
                 break;
         }
 
@@ -121,6 +144,7 @@ public class L1MESICacheLine extends CacheLine
         {
             case 1-3:
                 state = 4;
+                this.setValidBit(false);
                 break;
             default:
 
@@ -169,18 +193,19 @@ public class L1MESICacheLine extends CacheLine
     }
 
 
-    public int getCurrentState() {
+    public int getCurrentState()
+    {
         return this.state;
     }
 
-    public int getData() {
+    public int getData()
+    {
         return this.data;
     }
 
-    public void setData(int data) {
+    public void setData(int data)
+    {
         this.data = data;
     }
-
-
 
 }
