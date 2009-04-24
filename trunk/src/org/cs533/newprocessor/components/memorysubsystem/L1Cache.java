@@ -18,6 +18,7 @@ public class L1Cache implements ComponentInterface {
     CacheCoherenceBus bus;
     public static final int LATENCY = 1;
 
+
     public L1Cache(ProcessorCore _core, CacheCoherenceBus _bus) {
         bus = _bus;
         core = _core;

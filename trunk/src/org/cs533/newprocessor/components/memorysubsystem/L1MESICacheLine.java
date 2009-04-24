@@ -15,6 +15,7 @@ public class L1MESICacheLine extends CacheLine
 
     private boolean valid = false;
     private boolean dirty = false;
+
     public L1MESICacheLine() {
         this.data = 0;
         this.state = 2;
@@ -46,7 +47,7 @@ public class L1MESICacheLine extends CacheLine
     public int action;
     public int event;
     public int data;
-    public byte[] address;
+    //public byte[] address;
 
 
      public enum L1LineStates {
@@ -65,11 +66,11 @@ public class L1MESICacheLine extends CacheLine
 
     public L1MESICacheLine(int data, int state)
     {
-     // this.data = data;
-      //this.state = state;
+    
       super(data, state);
       this.data = data;
       this.state = state;
+
     }
 
 
@@ -77,68 +78,75 @@ public class L1MESICacheLine extends CacheLine
 
     // response = onMessage(currState, event);
 
-    public int onMessage(int currentState, Event event, int status, boolean shared, int data )
+    public int onMessage( Event event,  int data )
     {
        if(event == Event.BusInvalidate)
        {
-            action = busInvalidate(currentState, status, shared);
+            state = busInvalidate(state, shared);
        }
        else if(event == Event.BusRead)
        {
-           action = busRead(currentState, status, shared);
+           state = busRead(state, shared);
        }
 
        else if(event == Event.BusWrite)
        {
-          action = busWriteMiss(currentState, status, shared);
+          state = busWriteMiss(state, shared);
        }
        else if(event == Event.PRead)
        {
-           action = pRead(currentState, status, shared);
+           state = pRead(state, shared, data);
        }
        else if(event == Event.PWrite)
        {
-           action = pWrite(currentState, status, shared, data);
+           state = pWrite(state,  shared, data);
 
        }
-      return action;
+      return state;
     }
 
 
 
-    public int busInvalidate(int currentState, int status, boolean shared)
+    public int busInvalidate(int currentState, boolean shared)
     {
         if(currentState == 3)
         {
             state = 4;
             this.setValidBit(true);
         }
-        return action;
+        return state;
     }
 
-    public int busRead(int currentState, int status, boolean shared)
+    public int busRead(int currentState, boolean shared)
     {
         state = 3;
         this.setDirtyBit(false);
-        return action;
+        shared = true;
+        return state;
     }
-    public int pWrite(int currentState, int status, boolean shared, int data)
+    public int pWrite(int currentState, boolean shared, int data)
     {
         switch(currentState)
         {
             case 2-4:
                 state = 1;
                 setData(data);
+                this.setDirtyBit(true);
                 break;
             default:
                setData(data);
+               this.setDirtyBit(true);
                 break;
         }
 
-        return action;
+        return state;
     }
 
-    public int busWriteMiss(int currentState, int status, boolean shared)
+    private boolean someOneElseHasIt( )
+    {
+       return shared;
+    }
+    public int busWriteMiss(int currentState, boolean shared)
     {
       switch(currentState)
         {
@@ -147,34 +155,38 @@ public class L1MESICacheLine extends CacheLine
                 this.setValidBit(false);
                 break;
             default:
-
+                 this.setValidBit(false);
               break;
         }
-       return action;
+       return state;
      }
 
 
-    public int busRead(int currentState, int status, int shared )
+    public int busRead(int currentState, int shared )
     {
         this.state = 3;
-        return action;
+        return state;
     }
 
 
-    public int pRead(int currentState, int status, boolean shared)
+    public int pRead(int currentState, boolean shared, int newlyReadData)
     {
         switch (currentState)
         {
             case 0:
-                 if(shared)
+                 if(someOneElseHasIt())
+                 {
                      state = 3;
+                     this.setData(newlyReadData);
+                 }
                  else
                      state = 2;
                 break;
 
             case 4:
 
-              if(shared){currentState=3;}
+              if(shared)
+                 {currentState=3;}
               else
                 {currentState = 2;}
               break;
@@ -182,7 +194,7 @@ public class L1MESICacheLine extends CacheLine
             default:
                 break;
      }
-        return action;
+        return state;
    }
 
 
@@ -206,6 +218,8 @@ public class L1MESICacheLine extends CacheLine
     public void setData(int data)
     {
         this.data = data;
+        this.valid = true;
+        this.dirty = false;
     }
 
 }

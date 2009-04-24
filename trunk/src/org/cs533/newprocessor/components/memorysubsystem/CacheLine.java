@@ -10,12 +10,23 @@ package org.cs533.newprocessor.components.memorysubsystem;
  * @author amit
  */
 public class CacheLine {
+
     public int data;
     public boolean shared;
     public int state;
+    public int address;//
+    public int cachetag; // could be same as address for now
+     public CacheLine(int address)
+     {
+       this.address = address;
+       data = 0;
+       this.state =2;
+       this.shared = false;
+     }
 
      public CacheLine()
      {
+
       data = 0;
       this.state =2;
       this.shared = false;
