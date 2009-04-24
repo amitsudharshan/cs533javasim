@@ -9,7 +9,7 @@ import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction
 import org.cs533.newprocessor.components.core.RegisterFile;
 
 /**
- *
+ *addi r1 0x1
  * @author amit
  */
 public class AddImmediateInstruction extends AbstractALUImmediateInstruction {

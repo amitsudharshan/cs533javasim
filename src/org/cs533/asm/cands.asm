@@ -33,6 +33,7 @@ ori r5 r5 L0xFFFF
 
 
 #startLoop
+// if M[$Lock] == 0 Then M[$Lock] = 1
 cas r1 r2 r3
 beq r3 r2 #criticalSection
 beq r3 r3 #startLoop
@@ -40,17 +41,18 @@ beq r3 r3 #startLoop
 #criticalSection
 //load r6 = M[r4] counter into register
 lw r4 r6
+blez r6 #unlockLock
 add r6 r5 r6
 sw r4 r6
 
 #unlockLock
-//r2 is zero in this case and so we can safely set M[$lock] = 0
+//r2 is zero in this case and so we can safely set M[$lock] = 1 which locks in
 sw r1 r2
 //we also must reset r3 to be 0x1 as it is the compare register
 lui r3 U0x0
 ori r3 r3 L0x01
 // if counter is zero then goto done
-bleq r6 r2 #done
+blez r6 #done
 //else loop back around
 beq r6 r6 #startLoop
 

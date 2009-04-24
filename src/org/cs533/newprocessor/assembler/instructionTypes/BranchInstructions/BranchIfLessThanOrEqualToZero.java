@@ -10,19 +10,19 @@ import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction
 import org.cs533.newprocessor.components.core.RegisterFile;
 
 /**
- *Takes form bleq r1 r2 label
- * branches to label if r1<r2
+ *Takes form blez r1 label
+ * branches to label if r1 < 0
  * @author amit
  */
-public class BranchIfLessThanOrEqualToInstruction extends AbstractBranchInstruction {
+public class BranchIfLessThanOrEqualToZero extends AbstractBranchInstruction {
 
     static final int opcode = 0x06;
 
-    public BranchIfLessThanOrEqualToInstruction() {
+    public BranchIfLessThanOrEqualToZero() {
         super(opcode);
     }
 
-    public BranchIfLessThanOrEqualToInstruction(int instruction) {
+    public BranchIfLessThanOrEqualToZero(int instruction) {
         super(instruction,opcode);
     }
 
@@ -33,8 +33,7 @@ public class BranchIfLessThanOrEqualToInstruction extends AbstractBranchInstruct
 
     public void setPC(RegisterFile reg) {
         int reg1 = reg.getValueForRegister(registerOne);
-        int reg2 = reg.getValueForRegister(registerTwo);
-        if (reg1 < reg2) {
+        if (reg1 <= 0) {        
             reg.setPC(label);
         } else {
             reg.incrementPC(Globals.WORD_SIZE * 8);
@@ -51,7 +50,7 @@ public class BranchIfLessThanOrEqualToInstruction extends AbstractBranchInstruct
 
     @Override
     public AbstractInstruction getAbstractInstruction(int instruction) {
-        return new BranchIfLessThanOrEqualToInstruction(instruction);
+        return new BranchIfLessThanOrEqualToZero(instruction);
     }
 }
 

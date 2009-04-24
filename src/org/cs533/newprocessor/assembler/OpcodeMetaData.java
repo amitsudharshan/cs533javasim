@@ -15,7 +15,7 @@ import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.Load
 import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.StoreWordInstruction;
 import org.cs533.newprocessor.assembler.instructionTypes.ALUInstructions.ThreeRegisterALUInstruction;
 import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.BranchIfEqualInstruction;
-import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.BranchIfLessThanOrEqualToInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.BranchIfLessThanOrEqualToZero;
 
 /**
  *
@@ -33,7 +33,7 @@ public class OpcodeMetaData {
         opCodeToAssemblerMap.put("lw", new LoadWordInstruction());
         opCodeToAssemblerMap.put("cas", new CompareAndSwapInstruction());
         opCodeToAssemblerMap.put("beq", new BranchIfEqualInstruction());
-        opCodeToAssemblerMap.put("bleq", new BranchIfLessThanOrEqualToInstruction());
+        opCodeToAssemblerMap.put("blez", new BranchIfLessThanOrEqualToZero());
         opCodeToAssemblerMap.put("halt", new HaltInstruction());
         return opCodeToAssemblerMap;
     }

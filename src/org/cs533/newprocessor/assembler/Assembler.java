@@ -104,7 +104,6 @@ public class Assembler {
                 }
 
             }
-
             return new ExecutableImage(a.createMemoryForImage(), pcInitValues);
         } catch (IOException ex) {
             Logger.getLogger(Assembler.class.getName()).log(Level.SEVERE, null, ex);
