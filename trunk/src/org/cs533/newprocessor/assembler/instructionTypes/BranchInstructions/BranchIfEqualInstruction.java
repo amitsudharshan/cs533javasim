@@ -18,12 +18,13 @@ import org.cs533.newprocessor.components.core.RegisterFile;
 public class BranchIfEqualInstruction extends AbstractBranchInstruction {
 
     static final int opcode = 0x04;
+    static final String description = " branch if equal (2reg)";
 
     public BranchIfEqualInstruction() {
-        super(opcode);
+        super(opcode,description);
     }
     public  BranchIfEqualInstruction(int instruction) {
-        super(instruction,opcode);
+        super(instruction,opcode,description);
     }
 
     @Override

@@ -17,6 +17,8 @@ public abstract class AbstractInstruction {
     public static final int OP_CODE_SHIFT = 26;
     public static final int LOWER_16_IMMEDIATE_MASK = 0x0000FFFF;
     public static final int LONG_INTEGER_UNSIGNED_MASK = 0xFFFFFFFF;
+    static final int SIGN_EXTENSION_NEGATIVE_MASK = 0xFFFF0000;
+    static final int SIGN_BIT_SHIFT = 15;
     public static final HashMap<Integer, AbstractInstruction> instructionMap = OpcodeMetaData.populateInstructionAssemblerMap();
 
     public enum InstructionTypes {
@@ -39,12 +41,12 @@ public abstract class AbstractInstruction {
 
     public int parseImmediate(String imm) {
         int offset = 1;
-        if(imm.charAt(0)=='0') {
-            offset =0;
+        if (imm.charAt(0) == '0') {
+            offset = 0;
         }
         long decoded = Long.decode(imm.substring(offset));
         decoded = decoded & 0xFFFFFFFF;
-        int toReturn = (int)decoded;
+        int toReturn = (int) decoded;
         if (imm.charAt(0) == 'U') {
             toReturn = toReturn >> 16; //move the
         }
@@ -62,6 +64,15 @@ public abstract class AbstractInstruction {
 
     public static final int byteArrayToInt(byte[] b) {
         return (b[0] << 24) + ((b[1] & 0xFF) << 16) + ((b[2] & 0xFF) << 8) + (b[3] & 0xFF);
+    }
+
+    public static int signExtendSixteenBitInt(int num) {
+        int testNum = num >> SIGN_BIT_SHIFT;
+        if (testNum == 1) {
+            return num | SIGN_EXTENSION_NEGATIVE_MASK;
+        } else {
+            return num;
+        }
     }
 
     public static String zeroPadIntForString(int value, int totalBits) {
@@ -94,7 +105,7 @@ public abstract class AbstractInstruction {
     }
 
     public static void main(String[] args) {
-        long instruction = 0xFC000000& 0xffffffffL;
+        long instruction = 0xFC000000 & 0xffffffffL;
         long newInstrLong = instruction & OP_CODE_MASK;
         System.out.println(zeroPadIntForString((int) newInstrLong, 32));
         newInstrLong = newInstrLong >> 26;
