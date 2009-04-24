@@ -10,39 +10,50 @@ package org.cs533.newprocessor.components.memorysubsystem;
  * @author amit
  */
 public class CacheLine {
-
-    public int data;
-    public boolean shared;
+  
     public int state;
-    public int address;//
+    public CacheEntry cache_entry;
     public int cachetag; // could be same as address for now
+    public int processor;  //indicates which processor's cache this cacheLine is part of
      public CacheLine(int address)
      {
-       this.address = address;
-       data = 0;
+       cache_entry = new CacheEntry(address, 0, false);
        this.state =2;
-       this.shared = false;
      }
 
      public CacheLine()
      {
-
-      data = 0;
+       cache_entry = new CacheEntry(0, 0, false);
       this.state =2;
-      this.shared = false;
+      this.processor = -1;//belongs to no processor
      }
 
     public CacheLine(int _data, boolean _shared)
     {
-        data = _data;
+        cache_entry = new CacheEntry(0, _data, _shared);
         this.state = 2;//assume newly arriving data into cache is brought in from
                        //memory.  Thus, we are always at valid-exclusive
-        this.shared = _shared;
+        this.processor = -1;
     }
     public CacheLine( int _data, int _state)
     {
-        this.data = _data;
+        cache_entry = new CacheEntry (0, _data, false);
         this.state = _state;
+        this.processor = -1;
     }
+     public CacheLine( int _data, int _state, int _myProcessor)
+    {
+           cache_entry = new CacheEntry(0, _data, false);
+        this.state = _state;
+        this.processor = _myProcessor;
+    }
+
+     public CacheLine(int _address, int _data, int _state, int _myProcessor)
+    {
+        cache_entry = new CacheEntry(_address, _data, false);
+        this.state = _state;
+        this.processor = _myProcessor;
+    }
+
 }
 

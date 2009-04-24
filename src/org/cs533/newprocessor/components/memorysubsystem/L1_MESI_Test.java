@@ -63,7 +63,7 @@ public  class L1_MESI_Test
     int data6 = 19;
     for (int i = 0; i<10; i++)
       {
-     System.out.println("creating new cache lines");
+    // System.out.println("creating new cache lines");
      newCacheLine = new L1MESICacheLine((rand.nextInt()%90), false);
      L1Lines1.add(newCacheLine);
      newCacheLine = new L1MESICacheLine((rand.nextInt()%90), false);
@@ -84,35 +84,78 @@ public  class L1_MESI_Test
    * P2 write 0x100  (invalidate P1's copy ,  share P2)
    */
     
-   Iterator iter =  L1Lines1.values().iterator();
-     Iterator iter2 =  L1Lines2.values().iterator();
+   //Iterator iter =  L1Lines1.values().iterator();
+    // Iterator iter2 =  L1Lines2.values().iterator();
   
-    L1MESICacheLine x = new L1MESICacheLine();
-    L1MESICacheLine y = new L1MESICacheLine();
-    x = (L1MESICacheLine) iter.next();
-    y = (L1MESICacheLine) iter2.next();
-    x.address = 100;
-    y.address = 100;
-    x.onMessage(Event.PRead, 6);
-    y.onMessage(Event.BusRead, 6);
-    x.onMessage(Event.PWrite, 7);
-    y.onMessage(Event.BusWrite, 7);
-    System.out.println("The two lines should be ocherent: 1st cache line"+ x.data +"2nd cache line" + y.data);
-
-    x.onMessage(Event.PWrite, 8);
-    y.onMessage(Event.BusWrite, 8);
-    y.onMessage(Event.PRead, 8);
-      System.out.println("The two lines should be ocherent: 1st cache line"+ x.data +"2nd cache line" + y.data);
-
-    x.onMessage(Event.BusRead, 8);
-    y.onMessage(Event.PWrite, 9);
-    x.onMessage(Event.BusWrite, 9);
-
-    System.out.println("The two lines should be ocherent: 1st cache line:" 
+   L1MESICacheLine x = new L1MESICacheLine(100,(rand.nextInt()%90),  1);
+   L1MESICacheLine y = new L1MESICacheLine(100, (rand.nextInt()%90), 2);
+   //x = (L1MESICacheLine) iter.next();
+  
+     //P1 read  0x100
+    x.onMessage(Event.PRead, 100, 6);
+    y.onMessage(Event.BusRead, 100, 6);
+    System.out.println("Coherence: 1st cache line  data="
             + x.getData()
-            + "2nd cache line"
+            + "   2nd cache line data = "
+            + y.getData());
+    //P2 read 0x100   (should become shared in both)
+    x.onMessage(Event.PWrite, 100,  7);
+    y.onMessage(Event.BusWrite, 100, 7);
+ 
+    System.out.println("Coherence: 1st cache line  data="
+            + x.getData()
+            + "   2nd cache line data = "
             + y.getData());
 
+    // P1 Writes 0x100
+    x.onMessage(Event.PWrite, 100,  8);
+    y.onMessage(Event.BusInvalidate, 100,  8);
+
+    //P2  reads 0x100
+    y.onMessage(Event.PRead, 100,  8);
+    x.onMessage(Event.BusRead, 100, 8);
+   
+System.out.println("Coherence: 1st cache line  data="
+            + x.getData()
+            + "   2nd cache line data = "
+            + y.getData());
+
+    // P2 Writes 0x100
+    y.onMessage(Event.PWrite,100,  9);
+    x.onMessage(Event.BusInvalidate, 100,  9);
+
+    System.out.println("Coherence: 1st cache line  data="
+            + x.getData()
+            + "   2nd cache line data = "
+            + y.getData());
+
+
+    //P1 Writes 0x104  --->write miss
+
+    x.onMessage(Event.PWrite, 104, 37);
+    y.onMessage(Event.BusWrite, 104, 37);  //invalidate y's cache line
+
+       System.out.println("Coherence: 1st cache line  data="
+            + x.getData()
+            + "   2nd cache line entry = "
+            + y.getData()   );
+
+    //Now P2 reads 0x104 ---> read miss  , but get cache_entry from P1's line
+
+   if(y.cache_entry.shared)//the memAddr that y's line wants to invite
+                       //is shared by some other cache line in another processor
+   {
+       // will need to find out who has the line
+     // if(x.cache_entry.address == y.cache_entry.address)
+      {
+         y.onMessage(Event.PRead, 104, x.getData());
+         x.onMessage(Event.BusRead, 104, -1); //don't need data here
+      }
+   }
+        System.out.println("Coherence: 1st cache line  data="
+            + x.getData()
+            + "   2nd cache line data = "
+            + y.getData());
 /*
     L1MESICacheLine[] myLines1 = new L1MESICacheLine[10];
     L1MESICacheLine[] myLines2 = new L1MESICacheLine[10];
