@@ -17,13 +17,14 @@ import org.cs533.newprocessor.components.core.RegisterFile;
 public class BranchIfLessThanOrEqualToZero extends AbstractBranchInstruction {
 
     static final int opcode = 0x06;
+    static final String description = " branch if less than or equal to zero";
 
     public BranchIfLessThanOrEqualToZero() {
-        super(opcode);
+        super(opcode, description);
     }
 
     public BranchIfLessThanOrEqualToZero(int instruction) {
-        super(instruction,opcode);
+        super(instruction, opcode,description);
     }
 
     @Override
@@ -33,7 +34,7 @@ public class BranchIfLessThanOrEqualToZero extends AbstractBranchInstruction {
 
     public void setPC(RegisterFile reg) {
         int reg1 = reg.getValueForRegister(registerOne);
-        if (reg1 <= 0) {        
+        if (reg1 <= 0) {
             reg.setPC(label);
         } else {
             reg.incrementPC(Globals.WORD_SIZE * 8);

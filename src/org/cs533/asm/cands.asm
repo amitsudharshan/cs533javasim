@@ -27,10 +27,7 @@ ori r3 r3 L0x01
 lui r4 U$protectedCounter
 ori r4 r4 L$protectedCounter
 
-// set r5 to -1
-lui r5 U0xFFFFFFFF
-ori r5 r5 L0xFFFF
-
+//DO NOT OVERWRITE ANY OF THESE REGISTERS IN CODE BELOW AS THEY HOLD GLOBAL VALUES
 
 #startLoop
 // if M[$Lock] == 0 Then M[$Lock] = 1
@@ -42,7 +39,8 @@ beq r3 r3 #startLoop
 //load r6 = M[r4] counter into register
 lw r4 r6
 blez r6 #unlockLock
-add r6 r5 r6
+//add r6 to -1 (the add immediate instruction sign extends)
+addi r6 r6 0xFFFF
 sw r4 r6
 
 #unlockLock
@@ -62,6 +60,6 @@ halt
 .startpc
 
 #startInstructions
-#startInstructions
-#startInstructions
-#startInstructions
+//#startInstructions
+//#startInstructions
+//#startInstructions

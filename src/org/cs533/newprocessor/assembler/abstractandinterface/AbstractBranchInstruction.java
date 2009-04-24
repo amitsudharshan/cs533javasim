@@ -16,6 +16,7 @@ public abstract class AbstractBranchInstruction extends AbstractInstruction impl
     public int registerTwo;
     public int label;
     InstructionTypes type = InstructionTypes.branch;
+    String description;
 
     /*decoding masks */
     static final int regOneMask = 0x03E00000;
@@ -26,19 +27,21 @@ public abstract class AbstractBranchInstruction extends AbstractInstruction impl
     static final int regTwoShift = 16;
     int opcode;
 
-    public AbstractBranchInstruction(int opCode) {
+    public AbstractBranchInstruction(int opCode, String description_) {
         opcode = opCode;
+        description = description_;
+
     }
 
-    public AbstractBranchInstruction(int instruction, int opCode) {
-        this(opCode);
+    public AbstractBranchInstruction(int instruction, int opCode, String description_) {
+        this(opCode, description_);
         setRegisters(instruction);
     }
 
     @Override
     public String toString() {
         StringBuffer toReturn = new StringBuffer();
-        toReturn.append("executing instruction: branch if equal\n");
+        toReturn.append("executing instruction: " + description + "\n");
         toReturn.append(" with register one as #" + registerOne + "\n");
         toReturn.append(" and with register two as #" + registerTwo + "\n");
         toReturn.append(" branching to 0x" + Integer.toHexString(label) + "\n");

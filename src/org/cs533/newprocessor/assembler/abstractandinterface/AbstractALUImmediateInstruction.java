@@ -42,9 +42,9 @@ public abstract class AbstractALUImmediateInstruction extends AbstractInstructio
         destinationRegister = masked >> destShift;
 
         masked = instruction & AbstractInstruction.LOWER_16_IMMEDIATE_MASK;
-        immediate = masked;
-    }
 
+        immediate = signExtendSixteenBitInt(masked);
+    }
     @Override
     public String toString() {
         StringBuffer toReturn = new StringBuffer();
