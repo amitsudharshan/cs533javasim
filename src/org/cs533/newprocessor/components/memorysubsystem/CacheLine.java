@@ -9,51 +9,16 @@ package org.cs533.newprocessor.components.memorysubsystem;
  *
  * @author amit
  */
-public class CacheLine {
-  
-    public int state;
-    public CacheEntry cache_entry;
-    public int cachetag; // could be same as address for now
-    public int processor;  //indicates which processor's cache this cacheLine is part of
-     public CacheLine(int address)
-     {
-       cache_entry = new CacheEntry(address, 0, false);
-       this.state =2;
-     }
+public class CacheLine<LineStates> {
+    public LineStates state;
+    public int address;
+    public byte[] data;
 
-     public CacheLine()
-     {
-       cache_entry = new CacheEntry(0, 0, false);
-      this.state =2;
-      this.processor = -1;//belongs to no processor
-     }
-
-    public CacheLine(int _data, boolean _shared)
+     public CacheLine(int _address, byte[] _data, LineStates _state)
     {
-        cache_entry = new CacheEntry(0, _data, _shared);
-        this.state = 2;//assume newly arriving data into cache is brought in from
-                       //memory.  Thus, we are always at valid-exclusive
-        this.processor = -1;
+        address = _address;
+        data = _data;
+        state = _state;
     }
-    public CacheLine( int _data, int _state)
-    {
-        cache_entry = new CacheEntry (0, _data, false);
-        this.state = _state;
-        this.processor = -1;
-    }
-     public CacheLine( int _data, int _state, int _myProcessor)
-    {
-           cache_entry = new CacheEntry(0, _data, false);
-        this.state = _state;
-        this.processor = _myProcessor;
-    }
-
-     public CacheLine(int _address, int _data, int _state, int _myProcessor)
-    {
-        cache_entry = new CacheEntry(_address, _data, false);
-        this.state = _state;
-        this.processor = _myProcessor;
-    }
-
 }
 
