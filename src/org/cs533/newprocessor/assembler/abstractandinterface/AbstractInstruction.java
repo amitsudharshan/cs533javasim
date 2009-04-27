@@ -40,9 +40,9 @@ public abstract class AbstractInstruction {
     }
 
     public int parseImmediate(String imm) {
-        int offset = 1;
-        if (imm.charAt(0) == '0') {
-            offset = 0;
+        int offset = 0;
+        if (imm.charAt(0) == 'U' || imm.charAt(0) == 'L') {
+            offset = 1;
         }
         long decoded = Long.decode(imm.substring(offset));
         decoded = decoded & 0xFFFFFFFF;

@@ -7,6 +7,7 @@ package org.cs533.newprocessor.assembler.instructionTypes.ALUInstructions;
 import java.util.HashMap;
 import org.cs533.newprocessor.assembler.abstractandinterface.ALUInstructionInterface;
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;
+import org.cs533.newprocessor.assembler.abstractandinterface.BranchInstructionInterface;
 import org.cs533.newprocessor.components.core.RegisterFile;
 
 /**
@@ -16,7 +17,7 @@ import org.cs533.newprocessor.components.core.RegisterFile;
  * We will also do sub, and mul eventually
  * @author amit
  */
-public class ThreeRegisterALUInstruction extends AbstractInstruction implements ALUInstructionInterface {
+public class OpcodeZeroInstructionsWithFunctionCode extends AbstractInstruction implements ALUInstructionInterface, BranchInstructionInterface {
 
     int registerSource1;
     int registerSource2;
@@ -25,7 +26,7 @@ public class ThreeRegisterALUInstruction extends AbstractInstruction implements 
 
     /* opcode */
     static final int opcode = 0;
-    static final InstructionTypes type = InstructionTypes.alu;
+    InstructionTypes type = InstructionTypes.alu;
 
     /*decoding masks */
     static final int source1Mask = 0x03E00000;
@@ -39,13 +40,13 @@ public class ThreeRegisterALUInstruction extends AbstractInstruction implements 
     public HashMap<Integer, String> aluFunctionCodes;
     public HashMap<String, Integer> functionCodeForInstruction;
 
-    public ThreeRegisterALUInstruction() {
+    public OpcodeZeroInstructionsWithFunctionCode() {
         //This constructor is only called once in the Assembler to be able to
         // get a reference to the dissasemble method
         createFunctionCodesMap();
     }
 
-    public ThreeRegisterALUInstruction(int instruction) {
+    public OpcodeZeroInstructionsWithFunctionCode(int instruction) {
         this();
         setRegisters(instruction);
 
@@ -53,14 +54,17 @@ public class ThreeRegisterALUInstruction extends AbstractInstruction implements 
 
     @Override
     public AbstractInstruction getAbstractInstruction(int instruction) {
-        return new ThreeRegisterALUInstruction(instruction);
+        return new OpcodeZeroInstructionsWithFunctionCode(instruction);
+
     }
 
     public void createFunctionCodesMap() {
         aluFunctionCodes = new HashMap<Integer, String>();
         functionCodeForInstruction = new HashMap<String, Integer>();
         aluFunctionCodes.put(0x20, "add");
+        aluFunctionCodes.put(0x08,"jr");
         functionCodeForInstruction.put("add", 0x20);
+        functionCodeForInstruction.put("jr", 0x08);
     }
 
     public void setRegisters(int instruction) {
@@ -75,6 +79,9 @@ public class ThreeRegisterALUInstruction extends AbstractInstruction implements 
 
         masked = instruction & functionCodeMask;
         functionCode = masked;
+        if (functionCode == 0x08) {
+            type = InstructionTypes.branch;
+        }
         System.out.println("got function code = " + functionCode);
     }
 
@@ -85,8 +92,10 @@ public class ThreeRegisterALUInstruction extends AbstractInstruction implements 
         String[] split = instruction.split(" ");
         instr |= opcode << AbstractInstruction.OP_CODE_SHIFT;
         instr |= getIntForRegisterName(split[1]) << source1Shift;
-        instr |= getIntForRegisterName(split[2]) << source2Shift;
-        instr |= getIntForRegisterName(split[3]) << destShift;
+        if (split.length > 2) {
+            instr |= getIntForRegisterName(split[2]) << source2Shift;
+            instr |= getIntForRegisterName(split[3]) << destShift;
+        }
         Integer theFunction = functionCodeForInstruction.get(split[0]);
         if (theFunction != null) {
             instr |= theFunction;
@@ -108,14 +117,13 @@ public class ThreeRegisterALUInstruction extends AbstractInstruction implements 
     }
 
     public static void main(String[] args) {
-        ThreeRegisterALUInstruction a = new ThreeRegisterALUInstruction();
-        String instruction = "add r28 r3 r16 ";
+        OpcodeZeroInstructionsWithFunctionCode a = new OpcodeZeroInstructionsWithFunctionCode();
+        String instruction = "jr r7";
         int instructionBin = a.assembleInstruction(instruction);
         System.out.println("int value is " + Integer.toHexString(instructionBin));
         System.out.println(a.zeroPadIntForString(instructionBin, 32));
-        ThreeRegisterALUInstruction aF = new ThreeRegisterALUInstruction(instructionBin);
+        OpcodeZeroInstructionsWithFunctionCode aF = new OpcodeZeroInstructionsWithFunctionCode(instructionBin);
         System.out.println(aF);
-
     }
 
     @Override
@@ -134,5 +142,9 @@ public class ThreeRegisterALUInstruction extends AbstractInstruction implements 
     @Override
     public int getOpcode() {
         return opcode;
+    }
+
+    public void setPC(RegisterFile reg) {
+        reg.setPC(reg.getRetReg());
     }
 }

@@ -30,7 +30,7 @@ public class Assembler {
 
     enum ParserReturnValues {
 
-        success, failure, missinglabel
+        success, failure, missinglabel, missingvariable
     }
     Sections currentSection = Sections.start;
     int nextAddress = 0;
@@ -39,6 +39,7 @@ public class Assembler {
     HashMap<String, AbstractInstruction> opCodeToAssemblerMap;
     ArrayList<Integer> memoryImage = new ArrayList<Integer>();
     ArrayList<Integer> pcStart = new ArrayList<Integer>();
+    ArrayList<int[]> labelsToFix = new ArrayList<int[]>();
     ArrayList<int[]> instructionsToFix = new ArrayList<int[]>();
 
     public Assembler() {
@@ -65,7 +66,7 @@ public class Assembler {
     }
 
     public static void main(String[] args) throws Exception {
-        String inputFile = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/cands.asm";
+        String inputFile = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/producerconsumerqueue.asm";
         String outputFile = "/home/amit/asm/a.out";
         if (args.length >= 2) {
             inputFile = args[0];
@@ -87,6 +88,7 @@ public class Assembler {
             for (String line : lines) {
                 a.processLine(line, counter++);
             }
+            a.variableToAddressMap.put("$heap", a.nextAddress);
             int[] pcInitValues = new int[a.pcStart.size()];
             for (int i = 0; i < pcInitValues.length; i++) {
                 pcInitValues[i] = a.pcStart.get(i);
@@ -97,7 +99,9 @@ public class Assembler {
             for (int[] toFix : a.instructionsToFix) {
                 String line = lines.get(toFix[1]);
                 ParsedInstruction instr = a.parseInstruction(line);
-                if (instr.getFlag() == ParserReturnValues.failure || instr.getFlag() == ParserReturnValues.missinglabel) {
+                if (instr.getFlag() == ParserReturnValues.failure ||
+                        instr.getFlag() == ParserReturnValues.missinglabel ||
+                        instr.getFlag() == ParserReturnValues.missingvariable) {
                     throw new java.lang.RuntimeException("failure on pass two for instruction: \n\t" + line);
                 } else {
                     a.memoryImage.set(toFix[0], instr.getInstruction());
@@ -134,6 +138,7 @@ public class Assembler {
                     int toAdd = (int) (value & 0xFFFFFFFF);
                     memoryImage.add(toAdd);
                     nextAddress = nextAddress + (Globals.WORD_SIZE * 8);
+
                 } else {
                     throw new java.lang.RuntimeException("in data state found non matching instruction for line \n " + line);
                 }
@@ -151,11 +156,10 @@ public class Assembler {
                     } else if (instruction.getFlag() == ParserReturnValues.success) {
                         memoryImage.add(instruction.getInstruction());
                         nextAddress = nextAddress + (Globals.WORD_SIZE * 8);
-                    } else if (instruction.getFlag() == ParserReturnValues.missinglabel) {
+                    } else if (instruction.getFlag() == ParserReturnValues.missinglabel || instruction.getFlag() == ParserReturnValues.missingvariable) {
                         memoryImage.add(-1);
                         instructionsToFix.add(new int[]{memoryImage.size() - 1, lineIndex});
                         nextAddress = nextAddress + (Globals.WORD_SIZE * 8);
-
                     }
                 }
                 break;
@@ -181,6 +185,10 @@ public class Assembler {
 
                 if (split[i].indexOf("#") >= 0 && label == null) {
                     return new ParsedInstruction(-1, ParserReturnValues.missinglabel);
+                } else if (split[i].trim().indexOf("$heap") >= 0 && variable == null) {
+                    return new ParsedInstruction(-1, ParserReturnValues.missingvariable);
+                } else if (split[i].trim().indexOf("$heap") >= 0) {
+                    System.out.println("GOT A HEAP VALUE OF " + variable);
                 }
                 if (variable != null) {
                     split[i] = split[i].charAt(0) + "0x" + Integer.toHexString(variable);
@@ -209,7 +217,7 @@ public class Assembler {
         String line = null;
         while ((line = bRead.readLine()) != null) {
             if (line.compareTo("") != 0) {
-                tokens.add(line);
+                tokens.add(line.trim());
             }
         }
         return tokens;

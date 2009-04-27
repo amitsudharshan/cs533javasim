@@ -28,6 +28,7 @@ public class StoreWordInstruction extends AbstractInstruction implements MemoryI
     /* The values needed by the instruction */
     int registerContent;
     int registerAddress;
+    int offset;
 
     public StoreWordInstruction() {
     }
@@ -71,11 +72,17 @@ public class StoreWordInstruction extends AbstractInstruction implements MemoryI
         int reg1 = getIntForRegisterName(tokens[1]);
         int reg2 = getIntForRegisterName(tokens[2]);
 
+        if (tokens.length > 3) {
+            offset = signExtendSixteenBitInt(parseImmediate(tokens[3]));
+
+        } else {
+            offset = 0;
+        }
         instr = opcode << AbstractInstruction.OP_CODE_SHIFT;
         instr |= reg1 << addressRegShift;
         instr |= reg2 << contentRegShift;
+        instr |= offset;
         return instr;
-
     }
 
     /**

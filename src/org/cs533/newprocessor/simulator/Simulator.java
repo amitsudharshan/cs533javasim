@@ -37,7 +37,7 @@ public class Simulator {
     }
 
     public static void main(String[] args) throws Exception {
-        String asmFileName = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/cands.asm";
+        String asmFileName = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/producerconsumerqueue.asm";
         if (args.length > 0) {
             asmFileName = args[0];
         }
