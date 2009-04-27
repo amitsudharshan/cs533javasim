@@ -40,6 +40,12 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
     BusMessage msg = null;  
     int runCycles = 0;
 
+    CacheCoherenceBus(MemoryInterface upstream)
+    {
+        this.upstream = upstream;
+        clients = new ArrayList<BusClient<BusMessage>>();
+    }
+
     public void registerClient(BusClient<BusMessage> client) {
         if (!clients.contains(client)) {
             clients.add(client);
