@@ -4,40 +4,38 @@
  */
 package org.cs533.newprocessor.components.memorysubsystem;
 
-import org.cs533.newprocessor.components.memorysubsystem.l2cache.*;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import org.cs533.newprocessor.Globals;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 /**
  *
  * @author amit
  */
-public class LRUEvictHashTable<T extends CacheLine> extends LinkedHashMap<Integer,T> {
+public class LRUEvictHashTable<T extends CacheLine> {
+    
+    LinkedHashMap<Integer,T> lines;
 
-    public Integer address = -1;
-    public T line = null;
-    int size = Globals.L2_SIZE_IN_NUMBER_OF_LINES;
+    int size;
 
-    public LRUEvictHashTable(int size_) {
-        super(size_, 1, true);
-        size = size_;
+    public LRUEvictHashTable(int size) {
+        lines = new LinkedHashMap<Integer,T>(size+size/2, (float)0.75, true);
+        this.size = size;
     }
 
-    @Override
-    protected boolean removeEldestEntry(Map.Entry entry) {
-        if (size() > size) {
-            address = (Integer) entry.getKey();
-            line = (T) entry.getValue();
-            return true;
+    T get(int address) {
+        return lines.get(address);
+    }
+
+    T add(T newLine) {
+        lines.put(newLine.address, newLine);
+        if (lines.size() == size) {
+            Iterator<Entry<Integer,T>> iter = lines.entrySet().iterator();
+            Entry<Integer,T> removed = iter.next();
+            lines.remove(removed.getKey());
+            return removed.getValue();
         } else {
-            return false;
+            return null;
         }
     }
-
-    public void resetRemoved() {
-        address = -1;
-        line = null;
-    }
-
 }
