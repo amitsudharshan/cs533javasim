@@ -7,6 +7,7 @@ package org.cs533.newprocessor.components.memorysubsystem;
 import java.util.ArrayList;
 
 import org.cs533.newprocessor.ComponentInterface;
+import org.cs533.newprocessor.Globals;
 import org.cs533.newprocessor.components.bus.BusAggregator;
 import org.cs533.newprocessor.components.bus.BusClient;
 import org.cs533.newprocessor.components.bus.CacheCoherenceBus;
@@ -27,7 +28,7 @@ public class L1Cache<BusMessage, LineStates,
     CacheCoherenceBus<BusMessage> bus;
     ArrayList<MemoryInstruction> pendingRequests;
     Protocol proto;
-    public static final int LATENCY = 1;
+    public static final int LATENCY =Globals.L1_CACHE_LATENCY;
 
     public L1Cache (Protocol proto) {
         this.proto = proto;

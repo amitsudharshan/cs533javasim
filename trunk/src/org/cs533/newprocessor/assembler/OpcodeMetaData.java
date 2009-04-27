@@ -13,9 +13,10 @@ import org.cs533.newprocessor.assembler.instructionTypes.HaltInstruction;
 import org.cs533.newprocessor.assembler.instructionTypes.ALUInstructions.LoadUpperImmediateInstruction;
 import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.LoadWordInstruction;
 import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.StoreWordInstruction;
-import org.cs533.newprocessor.assembler.instructionTypes.ALUInstructions.ThreeRegisterALUInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.ALUInstructions.OpcodeZeroInstructionsWithFunctionCode;
 import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.BranchIfEqualInstruction;
 import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.BranchIfLessThanOrEqualToZero;
+import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.JumpAndLinkInstruction;
 
 /**
  *
@@ -25,7 +26,7 @@ public class OpcodeMetaData {
 
     public static HashMap<String, AbstractInstruction> populateOpCodeAssemblerMap() {
         HashMap<String, AbstractInstruction> opCodeToAssemblerMap = new HashMap<String, AbstractInstruction>();
-        opCodeToAssemblerMap.put("add", new ThreeRegisterALUInstruction());
+        opCodeToAssemblerMap.put("add", new OpcodeZeroInstructionsWithFunctionCode());
         opCodeToAssemblerMap.put("addi", new AddImmediateInstruction());
         opCodeToAssemblerMap.put("ori", new OrImmediateInstruction());
         opCodeToAssemblerMap.put("lui", new LoadUpperImmediateInstruction());
@@ -34,6 +35,8 @@ public class OpcodeMetaData {
         opCodeToAssemblerMap.put("cas", new CompareAndSwapInstruction());
         opCodeToAssemblerMap.put("beq", new BranchIfEqualInstruction());
         opCodeToAssemblerMap.put("blez", new BranchIfLessThanOrEqualToZero());
+        opCodeToAssemblerMap.put("jal", new JumpAndLinkInstruction());
+        opCodeToAssemblerMap.put("jr", new OpcodeZeroInstructionsWithFunctionCode());
         opCodeToAssemblerMap.put("halt", new HaltInstruction());
         return opCodeToAssemblerMap;
     }
@@ -42,10 +45,6 @@ public class OpcodeMetaData {
         HashMap<Integer, AbstractInstruction> instructionAssembler = new HashMap<Integer, AbstractInstruction>();
         HashMap<String, AbstractInstruction> opCodeMap = populateOpCodeAssemblerMap();
         for (AbstractInstruction instr : opCodeMap.values()) {
-            if (instructionAssembler.containsKey(instr.getOpcode())) {
-                throw new java.lang.RuntimeException("MULTIPLE OPCODES FOR " +
-                        "ONE INSTRUCTION! for " + instr.toString());
-            }
             instructionAssembler.put(instr.getOpcode(), instr);
         }
         return instructionAssembler;

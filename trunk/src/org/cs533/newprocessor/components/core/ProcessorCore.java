@@ -15,6 +15,13 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
 import org.cs533.newprocessor.simulator.Simulator;
 
+/*
+ * new CacheCoherenceBus<MIProtocol.MIBusMessage>(mainMemory)
+(10:14:41 PM) brandon.cs533@gmail.com: new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>()
+(10:14:59 PM) brandon.cs533@gmail.com: bus.registerClient(l1Cache)
+(10:15:12 PM) brandon.cs533@gmail.com: oh, except it looks like the bus doesn't have a constructor yet
+ * */
+
 /**
  *
  * @author amit
