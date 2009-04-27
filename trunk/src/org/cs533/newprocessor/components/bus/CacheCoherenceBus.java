@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
+import org.cs533.newprocessor.simulator.Simulator;
 
 
 /**
@@ -40,10 +41,11 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
     BusMessage msg = null;  
     int runCycles = 0;
 
-    CacheCoherenceBus(MemoryInterface upstream)
+    public CacheCoherenceBus(MemoryInterface upstream)
     {
         this.upstream = upstream;
         clients = new ArrayList<BusClient<BusMessage>>();
+        Simulator.registerComponent(this);
     }
 
     public void registerClient(BusClient<BusMessage> client) {

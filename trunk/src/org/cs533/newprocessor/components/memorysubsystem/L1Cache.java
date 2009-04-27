@@ -14,6 +14,7 @@ import org.cs533.newprocessor.components.bus.CacheCoherenceBus;
 import org.cs533.newprocessor.components.bus.CoherenceProtocol;
 import org.cs533.newprocessor.components.bus.ProtocolContext;
 import org.cs533.newprocessor.components.core.ProcessorCore;
+import org.cs533.newprocessor.simulator.Simulator;
 
 /**
  *
@@ -26,13 +27,14 @@ public class L1Cache<BusMessage, LineStates,
 
     ProcessorCore core;
     CacheCoherenceBus<BusMessage> bus;
-    ArrayList<MemoryInstruction> pendingRequests;
+    ArrayList<MemoryInstruction> pendingRequests =  new ArrayList<MemoryInstruction>();
     Protocol proto;
     public static final int LATENCY =Globals.L1_CACHE_LATENCY;
 
     public L1Cache (Protocol proto) {
         this.proto = proto;
         proto.setContext(this);
+        Simulator.registerComponent(this);
     }
 
     public MemoryInstruction getNextRequest() {
