@@ -19,6 +19,7 @@ public class MIProtocol
 
     ProtocolContext<MILineState> context;
     MemoryInstruction pendingRequest;
+    CacheLine<MILineState> evictedLine;
     LRUEvictHashTable<CacheLine<MILineState>> data;
 
     /** If state is Ready, pendingRequest is non-null */
@@ -37,20 +38,29 @@ public class MIProtocol
         MODIFIED, INVALID
     }
 
-    public class MIBusMessage
+    public MIBusMessage GetX(int address) {
+        return new MIBusMessage(MIBusMessageType.GETX, address, null);
+    }
+    public MIBusMessage Ack(int address, byte[] data){
+        return new MIBusMessage(MIBusMessageType.DATA_ACK, address, data);
+    }
+    public MIBusMessage Nack(int address){
+        return new MIBusMessage(MIBusMessageType.NACK, address, null);
+    }
+    public static class MIBusMessage
     {
         public final MIBusMessageType type;
         public final int address;
+        public final byte[] data;
 
-        public MIBusMessage(MIBusMessageType type, int address) {
+        public MIBusMessage(MIBusMessageType type, int address, byte[] data) {
             this.type = type;
             this.address = address;
+            this.data = data;
         }
     }
-
-    public enum MIBusMessageType {
-
-        INVALIDATE
+    public static enum MIBusMessageType {
+        GETX, DATA_ACK, NACK
     }
 
     public void setContext(ProtocolContext<MILineState> c) {
@@ -75,7 +85,31 @@ public class MIProtocol
     }
 
     public BusAggregator<MIBusMessage> getAggregator() {
-        return null;
+        if (true)
+            return null;
+        int address;
+        if (evictedLine != null) {
+            address = evictedLine.address;
+        } else {
+            address = pendingRequest.getInAddress();
+        }
+        final int _address = address;
+        return new BusAggregator<MIBusMessage>(){
+            final int address = _address;
+            byte[] data;
+            void aggregate(MIBusMessage msg) {
+                if (msg.type == MIBusMessageType.DATA_ACK) {
+                    data = msg.data;
+                }
+            }
+            MIBusMessage getResult() {
+                if (data != null) {
+                    return Ack(address,data);
+                } else {
+                    return Nack(address);
+                }
+            }
+        };
     }
 
     public MIBusMessage getResponse() {
@@ -86,8 +120,8 @@ public class MIProtocol
     {
         if (state == ProtocolState.Ready) {
             state = ProtocolState.RunningTransaction;
-          Simulator.logEvent("msg.invalidate");
-            return new MIBusMessage(MIBusMessageType.INVALIDATE, pendingRequest.inAddress);
+            Simulator.logEvent("msg.invalidate");
+            return GetX(pendingRequest.inAddress);
         } 
         else {
             return null;

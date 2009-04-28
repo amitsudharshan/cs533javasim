@@ -11,7 +11,6 @@ package org.cs533.newprocessor.components.bus;
  */
 public class BusAggregator<BusMessage> {
     void aggregate(BusMessage msg) {}
-    void aggregateParent(BusMessage msg) {}
     BusMessage getResult() {
         return null;
     }
