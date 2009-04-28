@@ -20,7 +20,7 @@ public class Globals {
     /*
      * LATENCIES
      */
-    public static final int MAIN_MEMORY_LATENCY = 1;
+    public static final int MAIN_MEMORY_LATENCY = 100;
     public static final int L2_CACHE_LATENCY = 5;
     public static final int L1_CACHE_LATENCY = 1;
     public static final int CACHE_COHERENCE_BUS_LATENCY = 15;
