@@ -33,12 +33,16 @@ public class L1Cache<BusMessage, LineStates,
 
     public L1Cache (Protocol proto) {
         this.proto = proto;
+        data = new LRUEvictHashTable<CacheLine<LineStates>> (Globals.L1_SIZE_IN_NUMBER_OF_LINES);
         proto.setContext(this);
         Simulator.registerComponent(this);
     }
 
     public MemoryInstruction getNextRequest() {
-        return pendingRequests.remove(0);
+        if (pendingRequests.isEmpty())
+            return null;
+        else
+            return pendingRequests.remove(0);
     }
     LRUEvictHashTable<CacheLine<LineStates>> data;
     public LRUEvictHashTable<CacheLine<LineStates>> getData() {return data;}
