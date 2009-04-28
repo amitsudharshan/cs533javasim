@@ -45,7 +45,7 @@ public class Simulator {
         synchronized (eventCounter) {
             Integer count = eventCounter.get(event);
             if (count == null) {
-                count = new Integer(0);
+                count = new Integer(1);
             } else {
                 count = new Integer(count + 1);
             }
