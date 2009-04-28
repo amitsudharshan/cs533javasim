@@ -4,6 +4,7 @@
  */
 package org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions;
 
+import org.cs533.newprocessor.Globals;
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;
 import org.cs533.newprocessor.assembler.abstractandinterface.BranchInstructionInterface;
 import org.cs533.newprocessor.components.core.RegisterFile;
@@ -42,7 +43,7 @@ public class JumpAndLinkInstruction extends AbstractInstruction implements Branc
     }
 
     public void setPC(RegisterFile reg) {
-        reg.setRetReg(reg.getPC());
+        reg.setRetReg(reg.getPC() + (8 * Globals.WORD_SIZE));
         reg.setPC(label);
     }
 

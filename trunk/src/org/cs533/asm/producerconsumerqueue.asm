@@ -21,11 +21,11 @@
 
         //r3 stores the head pointer of the queue
         lui r3 U$headOfQueue
-        ori r3 r2 L$headOfQueue
+        ori r3 r3 L$headOfQueue
 
         //r4 stores the tail pointer of the queue
         lui r4 U$tailOfQueue
-        ori r4 r3 L$tailOfQueue
+        ori r4 r4 L$tailOfQueue
 
         //r5 stores the value of 1
         lui r5 U0x1
@@ -48,22 +48,18 @@
         jal #registerInitialization
         //we will set the head of the queue to be in the heap here M[$headOfQueue] = $heap
         sw r3 r2
-        // set r3 to be the head of the queue
-        add r3 r0 r4
+        // now store memory[$tailOfQueue] to the same value (this is the empty queue)
         //set tail to the same spot as head and store in r4
         sw r4 r2
-        add r4 r0 r4
         beq r3 r3 #startProducing
 
     #consumerInitialization
     //set the initial register values
     jal #registerInitialization
-
         #headIsConstructed
-
             // now we load will load headOfQueue into r3
             lui r3 U$headOfQueue
-            ori r3 r2 L$headOfQueue
+            ori r3 r3 L$headOfQueue
             //if headOfQueue is still 0 then it has not been initialized..spin back
             beq r3 r0 #headIsConstructed
 
@@ -71,7 +67,7 @@
             //check to see if tail is constructed yet
             lui r4 U$tailOfQueue
             ori r4 r4 L$tailOfQueue
-            beq r3 r0 #tailIsConstructedLoop
+            beq r4 r0 #tailIsConstructedLoop
             //once this is done we are ready to go
             beq r3 r3 #startConsuming
 
@@ -85,36 +81,37 @@
         lw r4 r12
         // if head==tail then the queue is empty so we jump to the emptyQueue label
         beq r10 r12 #emptyQueue
-        //get memory[r10] into r10 (this is the value pointed to by head
-        lw r10 r10
-        // point head to the next address store result in r11
-        addi r3 r11 0x4
+        // add head to 4 to get the next location
+        addi r10 r10 0x4
+        //get memory[r10] into r11 (this is the value pointed to by head
+        lw r10 r11
         //store new head value
-        sw r3 r11
+        sw r3 r10
         //unlock
         jal #unlock
         //go back through the loop
         beq r3 r3 #startConsuming
+
+    #emptyQueue
+        jal #unlock
+        beq r3 r3 #startConsuming
+
 
     #startProducing
         //get the lock
         jal #lock
         //load pointer to tail into r10
         lw r4 r10
+        // increment the tail by 4
+        addi r10 r10 0x4
         //store the counter (r6) into the value pointed to by tail
         sw r10 r6
         //increment counter
         addi r6 r6 0x1
-        //increment tail
-        addi r4 r11 0x4
         //store new tail value
-        sw r4 r11
+        sw r4 r10
         jal #unlock
         beq r3 r3 #startProducing
-
-        #emptyQueue
-            jal #unlock
-            beq r3 r3 #startConsuming
 
 
     #lock

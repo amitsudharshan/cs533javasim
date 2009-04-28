@@ -62,20 +62,20 @@ public class Simulator {
     }
 
     public static void main(String[] args) throws Exception {
-        String asmFileName = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/cands.asm";
+        String asmFileName = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/producerconsumerqueue.asm";
         if (args.length > 0) {
             asmFileName = args[0];
         }
         //   ExecutableImage exec = ExecutableImage.loadImageFromFile(imageFileName);
         ExecutableImage exec = Assembler.getFullImage(asmFileName);
         MemoryInterface m = new MainMemory(exec.getMemoryImage());
-        CacheCoherenceBus<MIProtocol.MIBusMessage> bus = new CacheCoherenceBus<MIProtocol.MIBusMessage>(m);
+      //  CacheCoherenceBus<MIProtocol.MIBusMessage> bus = new CacheCoherenceBus<MIProtocol.MIBusMessage>(m);
         int[] pcStart = exec.getInitialPC();
         ProcessorCore[] pCore = new ProcessorCore[pcStart.length];
         for (int i = 0; i < pCore.length; i++) {
-            MemoryInterface l1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
-            bus.registerClient((L1Cache) l1);
-            pCore[i] = new ProcessorCore(pcStart[i], l1, i);
+          //  MemoryInterface l1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
+         //   bus.registerClient((L1Cache) l1);
+            pCore[i] = new ProcessorCore(pcStart[i], m, i);
         }
         runSimulation();
         int doneProcessor = 0;

@@ -4,6 +4,8 @@
  */
 package org.cs533.newprocessor;
 
+import java.util.logging.Logger;
+
 /**
  *
  * @author amit
@@ -32,8 +34,7 @@ public class Globals {
     public static final int INSTRUCTION_LENGTH = 32;
 
     public static final int MEMORY_ADDRESS_LENGTH = 19;
-  
-
+ 
 
 }
 
