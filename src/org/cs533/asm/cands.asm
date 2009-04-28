@@ -31,8 +31,6 @@ ori r4 r4 L$protectedCounter
 lui r7 U$heap
 ori r7 r7 L$heap
 
-sw r7
-
 //DO NOT OVERWRITE ANY OF THESE REGISTERS IN CODE BELOW AS THEY HOLD GLOBAL VALUES
 
 #startLoop
