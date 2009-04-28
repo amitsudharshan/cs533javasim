@@ -8,6 +8,8 @@ import org.cs533.newprocessor.components.bus.BusAggregator;
 import org.cs533.newprocessor.components.bus.CoherenceProtocol;
 import org.cs533.newprocessor.components.bus.ProtocolContext;
 
+import org.cs533.newprocessor.simulator.Simulator;
+
 /**
  *
  * @author brandon
@@ -20,7 +22,8 @@ public class MIProtocol
     LRUEvictHashTable<CacheLine<MILineState>> data;
 
     /** If state is Ready, pendingRequest is non-null */
-    private enum ProtocolState {
+    private enum ProtocolState
+    {
         RunningTransaction, FinishedRequest, GettingRequest, Ready, Uninitialized
     }
     ProtocolState state;
@@ -29,13 +32,13 @@ public class MIProtocol
         state = ProtocolState.Uninitialized;
     }
 
-    public enum MILineState {
-
+    public enum MILineState
+    {
         MODIFIED, INVALID
     }
 
-    public class MIBusMessage {
-
+    public class MIBusMessage
+    {
         public final MIBusMessageType type;
         public final int address;
 
@@ -56,12 +59,19 @@ public class MIProtocol
         state = ProtocolState.GettingRequest;
     }
 
-    public void recieveMessage(MIBusMessage msg) {
+    public void recieveMessage(MIBusMessage msg) 
+    {
+        Simulator.logEvent("msg.received");
         int evictAddress = msg.address;
         CacheLine line = data.get(evictAddress);
-        if (line != null) {
+        if (line != null)
+        {
+            
             line.state = MILineState.INVALID;
-        }
+            //line.data =  ;
+            data.lines.put(line.address, line);//invalidated line
+        }      
+
     }
 
     public BusAggregator<MIBusMessage> getAggregator() {
@@ -72,16 +82,20 @@ public class MIProtocol
         return null;
     }
 
-    public MIBusMessage getBusMessage() {
+    public MIBusMessage getBusMessage()
+    {
         if (state == ProtocolState.Ready) {
             state = ProtocolState.RunningTransaction;
+          Simulator.logEvent("msg.invalidate");
             return new MIBusMessage(MIBusMessageType.INVALIDATE, pendingRequest.inAddress);
-        } else {
+        } 
+        else {
             return null;
         }
     }
 
-    public MemoryInstruction getMemoryRequest() {
+    public MemoryInstruction getMemoryRequest()
+    {
         if (pendingRequest != null) {
             return pendingRequest;
         } else {
@@ -93,6 +107,7 @@ public class MIProtocol
         if (state == ProtocolState.RunningTransaction) {
             state = ProtocolState.FinishedRequest;
             pendingRequest = null;
+            
         }
     }
 
@@ -103,23 +118,37 @@ public class MIProtocol
         }
     }
 
-    public void runClock() {
+    public void runClock()
+    {
         if (state == ProtocolState.FinishedRequest) {
             state = ProtocolState.GettingRequest;
         } else if (state == ProtocolState.GettingRequest && pendingRequest != null) {
             CacheLine<MILineState> line = data.get(pendingRequest.getInAddress());
-            if (line != null && line.state == MILineState.MODIFIED) {
+            if (line != null && line.state == MILineState.MODIFIED)
+            {
                 // handle request out of cache
                 switch (pendingRequest.getType()) {
                     case Load:
+                        Simulator.logEvent("Load");
                         pendingRequest.setOutData(line.data);
+                        data.lines.put(line.address, line);
+                        break;
                     case Store:
+                        Simulator.logEvent("Store");
                         line.data = pendingRequest.getInData();
+                        data.lines.put(line.address, line);
+                        break;
                     case CAS:
-                        if (line.data == pendingRequest.compareData) {
+                        if (line.data == pendingRequest.compareData)
+                        {
                             pendingRequest.outData = line.data;
                             line.data = pendingRequest.inData;
                         }
+                        //data.add(line);
+                        break;
+                    default:
+
+                        break;
                 }
                 pendingRequest.setIsCompleted(true);
                 // go on to the next request;
