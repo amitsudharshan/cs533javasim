@@ -5,12 +5,16 @@
 package org.cs533.newprocessor.simulator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
 import org.cs533.newprocessor.assembler.Assembler;
+import org.cs533.newprocessor.components.bus.CacheCoherenceBus;
 import org.cs533.newprocessor.components.core.ProcessorCore;
+import org.cs533.newprocessor.components.memorysubsystem.L1Cache;
+import org.cs533.newprocessor.components.memorysubsystem.MIProtocol;
 import org.cs533.newprocessor.components.memorysubsystem.MainMemory;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
 
@@ -21,6 +25,7 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
 public class Simulator {
 
     static ArrayList<ComponentInterface> components = new ArrayList<ComponentInterface>();
+    static final HashMap<String, Integer> eventCounter = new HashMap<String, Integer>();
     static Thread simulatorThread;
     static boolean isStarted = false;
 
@@ -36,18 +41,41 @@ public class Simulator {
         return b;
     }
 
+    public static void logEvent(String event) {
+        synchronized (eventCounter) {
+            Integer count = eventCounter.get(event);
+            if (count == null) {
+                count = new Integer(0);
+            } else {
+                count = new Integer(count + 1);
+            }
+            eventCounter.put(event, count);
+        }
+    }
+
+    public static void printStatistics() {
+        synchronized (eventCounter) {
+            for (String key : eventCounter.keySet()) {
+                System.out.println("For event: " + key + " count is " + eventCounter.get(key));
+            }
+        }
+    }
+
     public static void main(String[] args) throws Exception {
-        String asmFileName = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/producerconsumerqueue.asm";
+        String asmFileName = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/cands.asm";
         if (args.length > 0) {
             asmFileName = args[0];
         }
-     //   ExecutableImage exec = ExecutableImage.loadImageFromFile(imageFileName);
+        //   ExecutableImage exec = ExecutableImage.loadImageFromFile(imageFileName);
         ExecutableImage exec = Assembler.getFullImage(asmFileName);
-        MemoryInterface memory = new MainMemory(exec.getMemoryImage());
+        MemoryInterface m = new MainMemory(exec.getMemoryImage());
+        CacheCoherenceBus<MIProtocol.MIBusMessage> bus = new CacheCoherenceBus<MIProtocol.MIBusMessage>(m);
         int[] pcStart = exec.getInitialPC();
         ProcessorCore[] pCore = new ProcessorCore[pcStart.length];
         for (int i = 0; i < pCore.length; i++) {
-            pCore[i] = new ProcessorCore(pcStart[i], memory,i);
+            MemoryInterface l1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
+            bus.registerClient((L1Cache) l1);
+            pCore[i] = new ProcessorCore(pcStart[i], l1, i);
         }
         runSimulation();
         int doneProcessor = 0;
@@ -84,7 +112,6 @@ public class Simulator {
 //        }
 //        stopSimulation();
 //    }
-
     public static void registerComponent(ComponentInterface component) {
         components.add(component);
     }
