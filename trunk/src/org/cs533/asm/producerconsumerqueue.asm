@@ -6,7 +6,6 @@
     $lock 0
     $headOfQueue 0
     $tailOfQueue 0
-
 .instructions
 
     #registerInitialization

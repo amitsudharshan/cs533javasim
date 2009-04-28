@@ -43,20 +43,12 @@ public class TestCacheProtocol {
             firstL1.enqueueMemoryInstruction(storeFirst);
             MemoryInstruction loadFirst = MemoryInstruction.Load(0);
             firstL1.enqueueMemoryInstruction(loadFirst);
-            MemoryInstruction storeSecond = MemoryInstruction.Store(0, AbstractInstruction.intToByteArray(SECOND_STORE_VALUE));
-            secondL1.enqueueMemoryInstruction(storeSecond);
             MemoryInstruction loadSecond = MemoryInstruction.Load(0);
-            secondL1.enqueueMemoryInstruction(loadSecond);
+            firstL1.enqueueMemoryInstruction(loadSecond);
 
 
             // wait till they are finished
-            while (!storeFirst.getIsCompleted() || !loadFirst.getIsCompleted() || !storeSecond.getIsCompleted() && !loadSecond.getIsCompleted()) {
-                Thread.sleep(10);
-            }
-            loadFirst = MemoryInstruction.Load(0);
-            firstL1.enqueueMemoryInstruction(loadFirst);
-            while (!loadFirst.getIsCompleted()) //stop the simulator
-            {
+            while (!storeFirst.getIsCompleted() || !loadFirst.getIsCompleted() || !loadSecond.getIsCompleted()) {
                 Thread.sleep(10);
             }
 
@@ -66,7 +58,7 @@ public class TestCacheProtocol {
             System.out.println("for memory address 0x" + Integer.toHexString(storeFirst.getInAddress()) + " we stored " + FIRST_STORE_VALUE);
             System.out.println("for memory address 0x " + Integer.toHexString(loadFirst.getInAddress()) + " we returned " + AbstractInstruction.byteArrayToInt(loadFirst.getOutData()));
 
-
+            Simulator.printStatistics();
         } catch (Exception ex) {
             System.out.println("FAILURE IN EXCEPTION WITH TRACE:");
             ex.printStackTrace();
