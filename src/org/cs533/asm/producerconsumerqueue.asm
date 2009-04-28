@@ -132,3 +132,4 @@
 .startpc
     #producerInitialization
     #consumerInitialization
+    #consumerInitialization   

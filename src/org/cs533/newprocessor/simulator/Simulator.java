@@ -29,6 +29,7 @@ public class Simulator {
     static Thread simulatorThread;
     static boolean isStarted = false;
 
+
     private Simulator() {
     }
 
@@ -69,13 +70,13 @@ public class Simulator {
         //   ExecutableImage exec = ExecutableImage.loadImageFromFile(imageFileName);
         ExecutableImage exec = Assembler.getFullImage(asmFileName);
         MemoryInterface m = new MainMemory(exec.getMemoryImage());
-      //  CacheCoherenceBus<MIProtocol.MIBusMessage> bus = new CacheCoherenceBus<MIProtocol.MIBusMessage>(m);
+        CacheCoherenceBus<MIProtocol.MIBusMessage> bus = new CacheCoherenceBus<MIProtocol.MIBusMessage>(m);
         int[] pcStart = exec.getInitialPC();
         ProcessorCore[] pCore = new ProcessorCore[pcStart.length];
         for (int i = 0; i < pCore.length; i++) {
-          //  MemoryInterface l1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
-         //   bus.registerClient((L1Cache) l1);
-            pCore[i] = new ProcessorCore(pcStart[i], m, i);
+            MemoryInterface l1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
+            bus.registerClient((L1Cache) l1);
+            pCore[i] = new ProcessorCore(pcStart[i], l1, i);
         }
         runSimulation();
         int doneProcessor = 0;
@@ -141,37 +142,37 @@ public class Simulator {
     }
 
     public static void runPrep() throws InterruptedException {
-        Thread[] t = new Thread[components.size()];
+           Thread[] tPrep = new Thread[components.size()];
         final AtomicInteger incr = new AtomicInteger(0);
-        for (int i = 0; i < t.length; i++) {
-            t[i] = new Thread(new Runnable() {
+        for (int i = 0; i < tPrep.length; i++) {
+            tPrep[i] = new Thread(new Runnable() {
 
                 public void run() {
                     components.get(incr.getAndIncrement()).runPrep();
                 }
             });
-            t[i].start();
+            tPrep[i].start();
         }
-        for (int i = 0; i < t.length; i++) {
-            t[i].join();
+        for (int i = 0; i < tPrep.length; i++) {
+            tPrep[i].join();
         }
 
     }
 
     public static void runClock() throws InterruptedException {
-        Thread[] t = new Thread[components.size()];
+        Thread[] tClock = new Thread[components.size()];
         final AtomicInteger incr = new AtomicInteger(0);
-        for (int i = 0; i < t.length; i++) {
-            t[i] = new Thread(new Runnable() {
+        for (int i = 0; i < tClock.length; i++) {
+            tClock[i] = new Thread(new Runnable() {
 
                 public void run() {
                     components.get(incr.getAndIncrement()).runClock();
                 }
             });
-            t[i].start();
+            tClock[i].start();
         }
-        for (int i = 0; i < t.length; i++) {
-            t[i].join();
+        for (int i = 0; i < tClock.length; i++) {
+            tClock[i].join();
         }
 
     }
