@@ -43,10 +43,7 @@ public class TestCacheProtocol {
 
 
             // wait till they are finished
-            while (true) {
-                if(store.getIsCompleted() && load.getIsCompleted()) {
-                    break;
-                }
+            while (!store.getIsCompleted() || !load.getIsCompleted()) {
                 try {
                     Thread.sleep(10);
                 } catch (InterruptedException ex) {
