@@ -10,7 +10,7 @@ import org.cs533.newprocessor.Globals;
  *
  * @author amit
  */
-public class MemoryInstruction {
+public class MemoryInstruction implements Cloneable {
 
     public enum InstructionType {
 

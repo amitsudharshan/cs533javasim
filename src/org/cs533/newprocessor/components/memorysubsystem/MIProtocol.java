@@ -7,6 +7,7 @@ package org.cs533.newprocessor.components.memorysubsystem;
 import org.cs533.newprocessor.components.bus.BusAggregator;
 import org.cs533.newprocessor.components.bus.CoherenceProtocol;
 import org.cs533.newprocessor.components.bus.ProtocolContext;
+import org.cs533.newprocessor.simulator.Simulator;
 
 import org.cs533.newprocessor.simulator.Simulator;
 
@@ -160,6 +161,7 @@ public class MIProtocol
             CacheLine<MILineState> line = data.get(pendingRequest.getInAddress());
             if (line != null && line.state == MILineState.MODIFIED)
             {
+                Simulator.logEvent("L1-CacheHit");
                 // handle request out of cache
                 switch (pendingRequest.getType()) {
                     case Load:
@@ -190,6 +192,7 @@ public class MIProtocol
             } else {
                 // must go to bus
                 state = ProtocolState.Ready;
+                Simulator.logEvent("L1-CacheMiss");
             }
         }
     }
