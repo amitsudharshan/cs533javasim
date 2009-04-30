@@ -31,9 +31,9 @@ public class TestCacheProtocol {
             MemoryInterface m = new MainMemory();
             CacheCoherenceBus<MIProtocol.MIBusMessage> bus = new CacheCoherenceBus<MIProtocol.MIBusMessage>(m);
             MemoryInterface firstL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
-            MemoryInterface secondL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
+      //      MemoryInterface secondL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
             bus.registerClient((L1Cache) firstL1);
-            bus.registerClient((L1Cache) secondL1);
+      //      bus.registerClient((L1Cache) secondL1);
 
             //start the simulation
             Simulator.runSimulation();
@@ -41,14 +41,14 @@ public class TestCacheProtocol {
             //execute the memory instructions
             MemoryInstruction storeFirst = MemoryInstruction.Store(0, AbstractInstruction.intToByteArray(FIRST_STORE_VALUE));
             firstL1.enqueueMemoryInstruction(storeFirst);
-            MemoryInstruction loadFirst = MemoryInstruction.Load(0);
-            firstL1.enqueueMemoryInstruction(loadFirst);
-            MemoryInstruction loadSecond = MemoryInstruction.Load(0);
-            firstL1.enqueueMemoryInstruction(loadSecond);
+//            MemoryInstruction loadFirst = MemoryInstruction.Load(0);
+//            firstL1.enqueueMemoryInstruction(loadFirst);
+//            MemoryInstruction loadSecond = MemoryInstruction.Load(0);
+//            firstL1.enqueueMemoryInstruction(loadSecond);
 
 
             // wait till they are finished
-            while (!storeFirst.getIsCompleted() || !loadFirst.getIsCompleted() || !loadSecond.getIsCompleted()) {
+            while (!storeFirst.getIsCompleted()) {// || !loadFirst.getIsCompleted() || !loadSecond.getIsCompleted()) {
                 Thread.sleep(10);
             }
 
@@ -56,7 +56,7 @@ public class TestCacheProtocol {
 //verify result:
             boolean isSuccess = true;
             System.out.println("for memory address 0x" + Integer.toHexString(storeFirst.getInAddress()) + " we stored " + FIRST_STORE_VALUE);
-            System.out.println("for memory address 0x " + Integer.toHexString(loadFirst.getInAddress()) + " we returned " + AbstractInstruction.byteArrayToInt(loadFirst.getOutData()));
+   //         System.out.println("for memory address 0x " + Integer.toHexString(loadFirst.getInAddress()) + " we returned " + AbstractInstruction.byteArrayToInt(loadFirst.getOutData()));
 
             Simulator.printStatistics();
         } catch (Exception ex) {

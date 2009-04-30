@@ -4,6 +4,8 @@
  */
 package org.cs533.newprocessor.components.memorysubsystem;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.cs533.newprocessor.Globals;
 
 /**
@@ -27,18 +29,18 @@ public class MemoryInstruction implements Cloneable {
     byte[] outData;
 
     public static MemoryInstruction Load(int inAddress) {
-        return new MemoryInstruction(inAddress,null, null, InstructionType.Load);
+        return new MemoryInstruction(inAddress, null, null, InstructionType.Load);
     }
 
     public static MemoryInstruction Store(int inAddress, byte[] data) {
-        return new MemoryInstruction(inAddress, null,data, InstructionType.Store);
-    }
-    
-    public static MemoryInstruction CompareAndSwap(int inAddress, byte[] compareData ,byte[] swapData) {
-        return new MemoryInstruction(inAddress,compareData,swapData,InstructionType.CAS);
+        return new MemoryInstruction(inAddress, null, data, InstructionType.Store);
     }
 
-    protected MemoryInstruction(int inAddress, byte[] compareData,byte[] data, InstructionType type) {
+    public static MemoryInstruction CompareAndSwap(int inAddress, byte[] compareData, byte[] swapData) {
+        return new MemoryInstruction(inAddress, compareData, swapData, InstructionType.CAS);
+    }
+
+    protected MemoryInstruction(int inAddress, byte[] compareData, byte[] data, InstructionType type) {
         this.type = type;
         this.type_flags = 0;
         this.inAddress = inAddress;
@@ -80,7 +82,18 @@ public class MemoryInstruction implements Cloneable {
     public InstructionType getType() {
         return type;
     }
+
     public int getTypeFlags() {
         return type_flags;
+    }
+
+    @Override
+    public MemoryInstruction clone() {
+        try {
+            return (MemoryInstruction) super.clone();
+        } catch (CloneNotSupportedException ex) {
+            Logger.getLogger(MemoryInstruction.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 }
