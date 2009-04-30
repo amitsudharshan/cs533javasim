@@ -55,8 +55,11 @@ public class FireflyCacheLine extends CacheLine
           default:   break;
       }
         if(state != oldState)
-           System.out.println(Main.currentTime + " *******proc #" + processor + " cache line " + address + " transition " +  oldState +   " -> "  + state);
-    }
+        {
+          System.out.print( Main.currentTime);
+         Main.printBlanks(5*processor);
+           System.out.println( " 0x" + address + " " +  oldState +   " -> "  + state);
+    }   }
 
    void processBusEvent(Main.EventType eventType) 
    {

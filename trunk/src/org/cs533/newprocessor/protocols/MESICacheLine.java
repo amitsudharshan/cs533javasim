@@ -231,8 +231,8 @@ public  static void processorStore(Event e, int address)
         if(state != oldState)
         {
            System.out.print(Main.currentTime );
-           Main.printBlanks(4*processor);
-           System.out.println(" **proc #" + processor + " cache line " + address + " transition " +  oldState +   " -> "  + state);
+           Main.printBlanks(5*processor);
+           System.out.println("p #" + processor + " cache line " + address + " transition " +  oldState +   " -> "  + state);
         }
            //this.print();
 

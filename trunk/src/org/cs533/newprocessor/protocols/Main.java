@@ -193,7 +193,7 @@ public static void printBlanks(int b)
                       if(t != null)
                       {
                           System.out.print(e.timeStamp);
-                          printBlanks(4*e.procNum);
+                          printBlanks(5*e.procNum);
                           System.out.println( " proc: " + e.procNum + " starting: " + instructionNames[t.instructionType] + " " +  t.address);
                           switch(t.instructionType)
                           {
