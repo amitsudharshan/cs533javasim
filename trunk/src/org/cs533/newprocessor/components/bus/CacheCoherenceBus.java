@@ -19,18 +19,10 @@ import org.cs533.newprocessor.simulator.Simulator;
  */
 public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
 
-    public enum MessageTypes {
-        CACHE_MISS_READ, CACHE_EVICT_WRITE, GET_EXCLUSIVE
-    }
-
-    public enum ResponseTypes {
-        ACK, ACK_GET_FROM_MEMORY
-    }
-
     enum Phase {
+
         GetMsg, BroadcastMsg, GetResponses, GetMemoryResponse, BroadcastResponse, Delay
     }
-
     ArrayList<BusClient<BusMessage>> clients;
     MemoryInterface upstream;
     BusAggregator<BusMessage> aggregator;
@@ -71,10 +63,10 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
                     j = (j + 1) % clients.size();
                 } while (j != nextClient);
                 if (msg == null) {
-                    phase = Phase.Delay;
+                    phase = Phase.GetMsg;
                 } else {
                     currentMaster = clients.get(j);
-                    nextClient = (nextClient + 1) % clients.size();
+                    nextClient = (j + 1) % clients.size();
                     for (BusClient<BusMessage> client : clients) {
                         if (client != currentMaster) {
                             client.recieveMessage(msg);
@@ -95,6 +87,9 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
                 }
                 if (responsesOutstanding.isEmpty()) {
                     BusMessage response = aggregator.getResult();
+                    if (response == null) {
+                        throw new java.lang.RuntimeException("Aggregator returned null");
+                    }
                     for (BusClient<BusMessage> client : clients) {
                         client.recieveMessage(response);
                     }
@@ -121,12 +116,14 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
         aggregator = currentMaster.getAggregator();
         if (aggregator != null) {
             responsesOutstanding = new ArrayList<BusClient<BusMessage>>(clients);
+            responsesOutstanding.remove(currentMaster);
             phase = Phase.GetResponses;
             return;
         }
         upstreamRequest = currentMaster.getMemoryRequest();
+
         if (upstreamRequest != null) {
-            upstream.enqueueMemoryInstruction(upstreamRequest);
+            upstream.enqueueMemoryInstruction(upstreamRequest.clone());
             phase = Phase.GetMemoryResponse;
             return;
         }

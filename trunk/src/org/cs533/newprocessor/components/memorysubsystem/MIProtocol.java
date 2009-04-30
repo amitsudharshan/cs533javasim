@@ -8,8 +8,7 @@ import org.cs533.newprocessor.components.bus.BusAggregator;
 import org.cs533.newprocessor.components.bus.CoherenceProtocol;
 import org.cs533.newprocessor.components.bus.ProtocolContext;
 import org.cs533.newprocessor.simulator.Simulator;
-
-import org.cs533.newprocessor.simulator.Simulator;
+import java.util.Arrays;
 
 /**
  *
@@ -21,12 +20,19 @@ public class MIProtocol
     ProtocolContext<MILineState> context;
     MemoryInstruction pendingRequest;
     CacheLine<MILineState> evictedLine;
+    MIBusMessage response;
     LRUEvictHashTable<CacheLine<MILineState>> data;
 
-    /** If state is Ready, pendingRequest is non-null */
-    private enum ProtocolState
-    {
-        RunningTransaction, FinishedRequest, GettingRequest, Ready, Uninitialized
+    /** Invariants
+     * when Ready, pendingRequest is non-null
+     *
+     * when running a transaction with evictedLine null, we
+     *  have an INVALID line allocated for the address of the request
+     *  in our cache
+     */
+    private enum ProtocolState {
+
+        QueryingSiblings, HittingMemory, FinishedRequest, GettingRequest, Ready, Uninitialized
     }
     ProtocolState state;
 
@@ -34,22 +40,19 @@ public class MIProtocol
         state = ProtocolState.Uninitialized;
     }
 
-    public enum MILineState
-    {
+    public enum MILineState {
+
         MODIFIED, INVALID
     }
 
-    public MIBusMessage GetX(int address) {
-        return new MIBusMessage(MIBusMessageType.GETX, address, null);
+    public static enum MIBusMessageType {
+
+        GETX, DATA_ACK, NACK,
+        WRITEBACK
     }
-    public MIBusMessage Ack(int address, byte[] data){
-        return new MIBusMessage(MIBusMessageType.DATA_ACK, address, data);
-    }
-    public MIBusMessage Nack(int address){
-        return new MIBusMessage(MIBusMessageType.NACK, address, null);
-    }
-    public static class MIBusMessage
-    {
+
+    public static class MIBusMessage {
+
         public final MIBusMessageType type;
         public final int address;
         public final byte[] data;
@@ -60,8 +63,18 @@ public class MIProtocol
             this.data = data;
         }
     }
-    public static enum MIBusMessageType {
-        GETX, DATA_ACK, NACK
+
+    private MIBusMessage GetX(int address) {
+        return new MIBusMessage(MIBusMessageType.GETX, address, null);
+    }
+    private MIBusMessage Ack(byte[] data) {
+        return new MIBusMessage(MIBusMessageType.DATA_ACK, -1, data);
+    }
+    private MIBusMessage Nack() {
+        return new MIBusMessage(MIBusMessageType.NACK, -1, null);
+    }
+    private MIBusMessage Writeback(int address) {
+        return new MIBusMessage(MIBusMessageType.WRITEBACK, address, null);
     }
 
     public void setContext(ProtocolContext<MILineState> c) {
@@ -70,130 +83,172 @@ public class MIProtocol
         state = ProtocolState.GettingRequest;
     }
 
-    public void recieveMessage(MIBusMessage msg) 
-    {
-        Simulator.logEvent("msg.received");
-        int evictAddress = msg.address;
-        CacheLine line = data.get(evictAddress);
-        if (line != null)
-        {
-            
-            line.state = MILineState.INVALID;
-            //line.data =  ;
-            data.lines.put(line.address, line);//invalidated line
-        }      
+    // responding to another transaction
+    // or responses in our own
+    public void recieveMessage(MIBusMessage msg) {
+        if (state != ProtocolState.QueryingSiblings) {
+            Simulator.logEvent("msg.received-type:" + msg.type.toString());
+            switch (msg.type) {
+                case GETX:
+                    CacheLine<MILineState> line = data.get(msg.address);
+                    if (line != null && line.state == MILineState.MODIFIED) {
+                        line.state = MILineState.INVALID;
+                        response = Ack(line.data);
+                    } else {
+                        response = Nack();
+                    }
+                    break;
+                case DATA_ACK:
+                case NACK:
+                case WRITEBACK:
+                    // ignore
+                    break;
+            }
+        } else {
+            // only solicit responses on memory requests,
+            // where we might need to get the line by cache-to-cache transfer
+            assert (evictedLine == null);
+            switch (msg.type) {
+                case DATA_ACK:
+                    // got data
+                    CacheLine<MILineState> line = data.get(pendingRequest.getInAddress());
+                    line.data = msg.data;
+                    handle_request_locally(line);
+                    state = ProtocolState.FinishedRequest;
+                    break;
+                case NACK:
+                    // no data, have to go to memory
+                    state = ProtocolState.HittingMemory;
+                    break;
+                // GETX, WRITEBACK should be impossible
+            }
+        }
+    }
 
+    public MIBusMessage getResponse() {
+        if (response != null) {
+            MIBusMessage theResponse = response;
+            response = null;
+            return theResponse;
+        }
+        return null;
+    }
+
+    // leading a transaction
+    public MIBusMessage getBusMessage() {
+        if (state == ProtocolState.Ready) {
+            if (evictedLine != null) {
+                state = ProtocolState.HittingMemory;
+                Simulator.logEvent("msg.invalidate-writeback");
+                return Writeback(evictedLine.address);
+            } else {
+                state = ProtocolState.QueryingSiblings;
+                Simulator.logEvent("msg.invalidate");
+                return GetX(pendingRequest.inAddress);
+            }
+        } else {
+            return null;
+        }
     }
 
     public BusAggregator<MIBusMessage> getAggregator() {
-        if (true)
+        if (state != ProtocolState.QueryingSiblings) {
             return null;
-        int address;
-        if (evictedLine != null) {
-            address = evictedLine.address;
-        } else {
-            address = pendingRequest.getInAddress();
         }
-        final int _address = address;
-        return new BusAggregator<MIBusMessage>(){
-            final int address = _address;
+        return new BusAggregator<MIBusMessage>() {
+
             byte[] data;
-            void aggregate(MIBusMessage msg) {
+            public void aggregate(MIBusMessage msg) {
                 if (msg.type == MIBusMessageType.DATA_ACK) {
                     data = msg.data;
                 }
             }
-            MIBusMessage getResult() {
+            public MIBusMessage getResult() {
                 if (data != null) {
-                    return Ack(address,data);
+                    return Ack(data);
                 } else {
-                    return Nack(address);
+                    return Nack();
                 }
             }
         };
     }
 
-    public MIBusMessage getResponse() {
+    public MemoryInstruction getMemoryRequest() {
+        if (state != ProtocolState.HittingMemory) {
+            return null;
+        }
+        if (evictedLine != null) {
+            return MemoryInstruction.Store(evictedLine.address, evictedLine.data);
+        } else if (pendingRequest != null) {
+            return MemoryInstruction.Load(pendingRequest.getInAddress());
+        }
+        assert false;
         return null;
     }
 
-    public MIBusMessage getBusMessage()
-    {
-        if (state == ProtocolState.Ready) {
-            state = ProtocolState.RunningTransaction;
-            Simulator.logEvent("msg.invalidate");
-            return GetX(pendingRequest.inAddress);
-        } 
-        else {
-            return null;
-        }
-    }
-
-    public MemoryInstruction getMemoryRequest()
-    {
-        if (pendingRequest != null) {
-            return pendingRequest;
-        } else {
-            return null;
-        }
-    }
-
     public void recieveMemoryResponse(MemoryInstruction resp) {
-        if (state == ProtocolState.RunningTransaction) {
+        if (state == ProtocolState.HittingMemory) {
+            CacheLine<MILineState> line = data.get(pendingRequest.getInAddress());
+            line.state = MILineState.MODIFIED;
+            line.data = resp.getOutData();
+            handle_request_locally(line);
             state = ProtocolState.FinishedRequest;
-            pendingRequest = null;
-            
         }
     }
 
     public void runPrep() {
         if (state == ProtocolState.GettingRequest) {
-            assert(pendingRequest == null);
+            assert (pendingRequest == null);
             pendingRequest = context.getNextRequest();
         }
     }
 
-    public void runClock()
-    {
+    public void runClock() {
         if (state == ProtocolState.FinishedRequest) {
             state = ProtocolState.GettingRequest;
         } else if (state == ProtocolState.GettingRequest && pendingRequest != null) {
             CacheLine<MILineState> line = data.get(pendingRequest.getInAddress());
-            if (line != null && line.state == MILineState.MODIFIED)
-            {
+            if (line != null && line.state == MILineState.MODIFIED) {
                 Simulator.logEvent("L1-CacheHit");
                 // handle request out of cache
-                switch (pendingRequest.getType()) {
-                    case Load:
-                        Simulator.logEvent("Load");
-                        pendingRequest.setOutData(line.data);
-                        data.lines.put(line.address, line);
-                        break;
-                    case Store:
-                        Simulator.logEvent("Store");
-                        line.data = pendingRequest.getInData();
-                        data.lines.put(line.address, line);
-                        break;
-                    case CAS:
-                        if (line.data == pendingRequest.compareData)
-                        {
-                            pendingRequest.outData = line.data;
-                            line.data = pendingRequest.inData;
-                        }
-                        //data.add(line);
-                        break;
-                    default:
-
-                        break;
-                }
+                handle_request_locally(line);
                 pendingRequest.setIsCompleted(true);
                 // go on to the next request;
                 pendingRequest = null;
-            } else {
+            } else if (line != null && line.state == MILineState.INVALID) {
                 // must go to bus
                 state = ProtocolState.Ready;
                 Simulator.logEvent("L1-CacheMiss");
+            } else {
+                CacheLine<MILineState> newLine = new CacheLine<MILineState>(pendingRequest.getInAddress(), null, MILineState.INVALID);
+                evictedLine = data.add(newLine);
+                if (evictedLine != null && evictedLine.state == MILineState.MODIFIED) {
+                    Simulator.logEvent("L1-CacheMiss-w/eviction");
+                } else {
+                    evictedLine = null;
+                    Simulator.logEvent("L1-CacheMiss");
+                }
+                state = ProtocolState.Ready;
             }
+        }
+    }
+
+    private void handle_request_locally(CacheLine<MILineState> line) {
+        switch (pendingRequest.getType()) {
+            case Load:
+                Simulator.logEvent("Load");
+                pendingRequest.setOutData(line.data);
+                break;
+            case Store:
+                Simulator.logEvent("Store");
+                line.data = pendingRequest.getInData();
+                break;
+            case CAS:
+                if (Arrays.equals(line.data, pendingRequest.compareData)) {
+                    pendingRequest.outData = line.data;
+                    line.data = pendingRequest.inData;
+                }
+                break;
         }
     }
 
