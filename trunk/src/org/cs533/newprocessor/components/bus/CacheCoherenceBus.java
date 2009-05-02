@@ -58,13 +58,17 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
                 do {
                     msg = clients.get(j).getBusMessage();
                     if (msg != null) {
+                        Simulator.logEvent("GetMsg - client "+j+" has message");
                         break;
                     }
+                    Simulator.logEvent("GetMsg - client "+j+" not ready");
                     j = (j + 1) % clients.size();
                 } while (j != nextClient);
                 if (msg == null) {
+                    Simulator.logEvent("GetMsg - none ready");
                     phase = Phase.GetMsg;
                 } else {
+                    Simulator.logEvent("GetMsg - got message");
                     currentMaster = clients.get(j);
                     nextClient = (j + 1) % clients.size();
                     for (BusClient<BusMessage> client : clients) {
@@ -76,16 +80,19 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
                 }
                 break;
             case GetResponses:
+                Simulator.logEvent("GetResponses");
                 Iterator<BusClient<BusMessage>> iterator = responsesOutstanding.iterator();
                 while (iterator.hasNext()) {
                     BusClient<BusMessage> client = iterator.next();
                     BusMessage response = client.getResponse();
                     if (response != null) {
+                        Simulator.logEvent("GetResponses - got a response");
                         aggregator.aggregate(response);
                         iterator.remove();
                     }
                 }
                 if (responsesOutstanding.isEmpty()) {
+                    Simulator.logEvent("GetResponses - have all responses");
                     BusMessage response = aggregator.getResult();
                     if (response == null) {
                         throw new java.lang.RuntimeException("Aggregator returned null");
@@ -97,15 +104,19 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
                 }
                 break;
             case GetMemoryResponse:
+                Simulator.logEvent("GetMemoryResponses");
                 if (upstreamRequest.getIsCompleted()) {
                     for (BusClient<BusMessage> client : clients) {
                         client.recieveMemoryResponse(upstreamRequest);
                     }
+                    Simulator.logEvent("GetMemoryResponse - got response");
                     finishedRound();
                 }
                 break;
             case Delay:
+                Simulator.logEvent("Delay");
                 if (runCycles >= Globals.CACHE_COHERENCE_BUS_LATENCY) {
+                    Simulator.logEvent("Delay - finished");
                     runCycles = 0;
                     phase = Phase.GetMsg;
                 }
@@ -118,15 +129,18 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
             responsesOutstanding = new ArrayList<BusClient<BusMessage>>(clients);
             responsesOutstanding.remove(currentMaster);
             phase = Phase.GetResponses;
+            Simulator.logEvent("finishedRound -> GetResponses");
             return;
         }
         upstreamRequest = currentMaster.getMemoryRequest();
 
         if (upstreamRequest != null) {
-            upstream.enqueueMemoryInstruction(upstreamRequest.clone());
+            upstream.enqueueMemoryInstruction(upstreamRequest);
             phase = Phase.GetMemoryResponse;
+            Simulator.logEvent("finishedRound -> GetMemoryResponses");
             return;
         }
+        Simulator.logEvent("finishedRound -> Delay");
         phase = Phase.Delay;
     }
 

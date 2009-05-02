@@ -67,12 +67,15 @@ public class MIProtocol
     private MIBusMessage GetX(int address) {
         return new MIBusMessage(MIBusMessageType.GETX, address, null);
     }
+
     private MIBusMessage Ack(byte[] data) {
         return new MIBusMessage(MIBusMessageType.DATA_ACK, -1, data);
     }
+
     private MIBusMessage Nack() {
         return new MIBusMessage(MIBusMessageType.NACK, -1, null);
     }
+
     private MIBusMessage Writeback(int address) {
         return new MIBusMessage(MIBusMessageType.WRITEBACK, address, null);
     }
@@ -158,11 +161,13 @@ public class MIProtocol
         return new BusAggregator<MIBusMessage>() {
 
             byte[] data;
+
             public void aggregate(MIBusMessage msg) {
                 if (msg.type == MIBusMessageType.DATA_ACK) {
                     data = msg.data;
                 }
             }
+
             public MIBusMessage getResult() {
                 if (data != null) {
                     return Ack(data);
@@ -188,11 +193,17 @@ public class MIProtocol
 
     public void recieveMemoryResponse(MemoryInstruction resp) {
         if (state == ProtocolState.HittingMemory) {
-            CacheLine<MILineState> line = data.get(pendingRequest.getInAddress());
-            line.state = MILineState.MODIFIED;
-            line.data = resp.getOutData();
-            handle_request_locally(line);
-            state = ProtocolState.FinishedRequest;
+            if (evictedLine != null) {
+                // upload finished
+                evictedLine = null;
+            } else {
+                assert (pendingRequest != null);
+                CacheLine<MILineState> line = data.get(pendingRequest.getInAddress());
+                line.state = MILineState.MODIFIED;
+                line.data = resp.getOutData();
+                handle_request_locally(line);
+                state = ProtocolState.FinishedRequest;
+            }
         }
     }
 
@@ -212,9 +223,7 @@ public class MIProtocol
                 Simulator.logEvent("L1-CacheHit");
                 // handle request out of cache
                 handle_request_locally(line);
-                pendingRequest.setIsCompleted(true);
-                // go on to the next request;
-                pendingRequest = null;
+                assert (pendingRequest == null);
             } else if (line != null && line.state == MILineState.INVALID) {
                 // must go to bus
                 state = ProtocolState.Ready;
@@ -225,6 +234,7 @@ public class MIProtocol
                 if (evictedLine != null && evictedLine.state == MILineState.MODIFIED) {
                     Simulator.logEvent("L1-CacheMiss-w/eviction");
                 } else {
+                    assert (evictedLine.state == MILineState.INVALID);
                     evictedLine = null;
                     Simulator.logEvent("L1-CacheMiss");
                 }
@@ -238,18 +248,22 @@ public class MIProtocol
             case Load:
                 Simulator.logEvent("Load");
                 pendingRequest.setOutData(line.data);
+                pendingRequest.setIsCompleted(true);
                 break;
             case Store:
                 Simulator.logEvent("Store");
                 line.data = pendingRequest.getInData();
+                pendingRequest.setIsCompleted(true);
                 break;
             case CAS:
                 if (Arrays.equals(line.data, pendingRequest.compareData)) {
                     pendingRequest.outData = line.data;
                     line.data = pendingRequest.inData;
                 }
+                pendingRequest.setIsCompleted(true);
                 break;
         }
+        pendingRequest = null;
     }
 
     public int getLatency() {

@@ -5,7 +5,7 @@
 
 package org.cs533.newprocessor.protocols;
 
-import CacheCoherenceProtocols.Main.EventType;
+import org.cs533.newprocessor.protocols.Main.EventType;
 
 /**
  *
