@@ -6,8 +6,10 @@ package org.cs533.newprocessor.simulator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.logging.Logger;
+import org.cs533.newprocessor.AsyncComponentInterface;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
 import org.cs533.newprocessor.assembler.Assembler;
@@ -24,11 +26,10 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
  */
 public class Simulator {
 
-    static ArrayList<ComponentInterface> components = new ArrayList<ComponentInterface>();
+    static ArrayList<AsyncComponentInterface> components = new ArrayList<AsyncComponentInterface>();
     static final HashMap<String, Integer> eventCounter = new HashMap<String, Integer>();
     static Thread simulatorThread;
-    static boolean isStarted = false;
-
+    static boolean isRunning = false;
 
     private Simulator() {
     }
@@ -44,6 +45,7 @@ public class Simulator {
 
     public static void logEvent(String event) {
         synchronized (eventCounter) {
+            // System.out.println(event);
             Integer count = eventCounter.get(event);
             if (count == null) {
                 count = new Integer(1);
@@ -114,66 +116,88 @@ public class Simulator {
 //        stopSimulation();
 //    }
     public static void registerComponent(ComponentInterface component) {
+        if (isRunning) {
+            throw new RuntimeException("Attempted to add component with simulation running");
+        }
+        components.add(new ComponentWrapper(component));
+    }
+    public static void registerComponent(AsyncComponentInterface component) {
+        if (isRunning) {
+            throw new RuntimeException("Attempted to add component with simulation running");
+        }
         components.add(component);
     }
 
     public static void stopSimulation() {
         simulatorThread.interrupt();
+        try {
+            simulatorThread.join();
+        } catch (InterruptedException e) {
+            return;
+        }
+    }
+
+    private static class ComponentWrapper implements AsyncComponentInterface {
+
+        CyclicBarrier prepBarrier, clockBarrier;
+        ComponentInterface component;
+        public ComponentWrapper(ComponentInterface c)
+        {
+            this.component = c;
+        }
+        public void configure(CyclicBarrier prepBarrier, CyclicBarrier clockBarrier) {
+            this.prepBarrier = prepBarrier;
+            this.clockBarrier = clockBarrier;
+        }
+
+        public void run() {
+            try {
+                while (true) {
+                    prepBarrier.await();
+                    component.runPrep();
+                    clockBarrier.await();
+                    component.runClock();
+                }
+            } catch (InterruptedException e) {
+                // how workers are killed
+            } catch (BrokenBarrierException b) {
+                // what other blocked workers see when one is killed
+                // while one is waiting at barrier
+            }
+        }
     }
 
     public static void runSimulation() {
+        isRunning = true;
+        final Thread[] workers = new Thread[components.size()];
+        final CyclicBarrier prepStart = new CyclicBarrier(components.size());
+        final CyclicBarrier clockStart = new CyclicBarrier(components.size());
+        for (int i = 0; i < workers.length; i++) {
+            AsyncComponentInterface r = components.get(i);
+            r.configure(prepStart, clockStart);
+            workers[i] = new Thread(r);
+            workers[i].start();
+        }
         simulatorThread = new Thread(new Runnable() {
 
             public void run() {
-                while (true) {
-                    try {
-                        runPrep();
-                        runClock();
-                    } catch (InterruptedException ex) {
-                        Logger.getAnonymousLogger().info("recieved interrupt probably caused by stop call");
-                        break;
-                    }
-
+                try {
+                    while (true) {Thread.sleep(Long.MAX_VALUE);}
+                } catch (InterruptedException ex) {
+                    Logger.getAnonymousLogger().info("recieved interrupt probably caused by stop call");
                 }
-                isStarted = false;
+                for (int i = 0; i < workers.length; ++i) {
+                    workers[i].interrupt();
+                }
+                try {
+                    for (int i = 0; i < workers.length; ++i) {
+                        workers[i].join();
+                    }
+                } catch (InterruptedException ex) {
+                }
+                isRunning = false;
             }
         });
         simulatorThread.start();
-    }
-
-    public static void runPrep() throws InterruptedException {
-           Thread[] tPrep = new Thread[components.size()];
-        final AtomicInteger incr = new AtomicInteger(0);
-        for (int i = 0; i < tPrep.length; i++) {
-            tPrep[i] = new Thread(new Runnable() {
-
-                public void run() {
-                    components.get(incr.getAndIncrement()).runPrep();
-                }
-            });
-            tPrep[i].start();
-        }
-        for (int i = 0; i < tPrep.length; i++) {
-            tPrep[i].join();
-        }
-
-    }
-
-    public static void runClock() throws InterruptedException {
-        Thread[] tClock = new Thread[components.size()];
-        final AtomicInteger incr = new AtomicInteger(0);
-        for (int i = 0; i < tClock.length; i++) {
-            tClock[i] = new Thread(new Runnable() {
-
-                public void run() {
-                    components.get(incr.getAndIncrement()).runClock();
-                }
-            });
-            tClock[i].start();
-        }
-        for (int i = 0; i < tClock.length; i++) {
-            tClock[i].join();
-        }
-
     }
 }
