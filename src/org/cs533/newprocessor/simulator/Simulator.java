@@ -53,6 +53,7 @@ public class Simulator {
                 count = new Integer(count + 1);
             }
             eventCounter.put(event, count);
+            System.out.println("log: " + event);
         }
     }
 
@@ -65,7 +66,7 @@ public class Simulator {
     }
 
     public static void main(String[] args) throws Exception {
-        String asmFileName = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/producerconsumerqueue.asm";
+        String asmFileName = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/cands.asm";
         if (args.length > 0) {
             asmFileName = args[0];
         }
@@ -91,36 +92,13 @@ public class Simulator {
         stopSimulation();
     }
 
-//    public static void testMemoryMain(String[] args) throws Exception {
-//        L2Cache l2 = new L2Cache(new MainMemory());
-//
-//        MemoryInstruction[] instruction = new MemoryInstruction[4];//
-//        for (int i = 0; i < instruction.length; i++) {
-//            instruction[i] = MemoryInstruction.Store(i * 4, generateSimpleCacheLineFromOffset(i * 4));
-//            l2.enqueueMemoryInstruction(instruction[i]);
-//        }
-//        runSimulation();
-//        for (int i = 0; i < instruction.length; i++) {
-//            while (!instruction[i].getIsCompleted()) {
-//                Thread.sleep(1);
-//            }
-//        }
-//        MemoryInstruction readInstr = MemoryInstruction.Load(0);
-//        l2.enqueueMemoryInstruction(readInstr);
-//        while (!readInstr.getIsCompleted()) {
-//            Thread.sleep(1);
-//        }
-//        for (int i = 0; i < readInstr.getOutData().length; i++) {
-//            System.out.println("FOR address = 0x" + Integer.toHexString(i + readInstr.getInAddress()) + " the value is = " + readInstr.getOutData()[i]);
-//        }
-//        stopSimulation();
-//    }
     public static void registerComponent(ComponentInterface component) {
         if (isRunning) {
             throw new RuntimeException("Attempted to add component with simulation running");
         }
         components.add(new ComponentWrapper(component));
     }
+
     public static void registerComponent(AsyncComponentInterface component) {
         if (isRunning) {
             throw new RuntimeException("Attempted to add component with simulation running");
@@ -141,10 +119,11 @@ public class Simulator {
 
         CyclicBarrier prepBarrier, clockBarrier;
         ComponentInterface component;
-        public ComponentWrapper(ComponentInterface c)
-        {
+
+        public ComponentWrapper(ComponentInterface c) {
             this.component = c;
         }
+
         public void configure(CyclicBarrier prepBarrier, CyclicBarrier clockBarrier) {
             this.prepBarrier = prepBarrier;
             this.clockBarrier = clockBarrier;
@@ -182,7 +161,9 @@ public class Simulator {
 
             public void run() {
                 try {
-                    while (true) {Thread.sleep(Long.MAX_VALUE);}
+                    while (true) {
+                        Thread.sleep(Long.MAX_VALUE);
+                    }
                 } catch (InterruptedException ex) {
                     Logger.getAnonymousLogger().info("recieved interrupt probably caused by stop call");
                 }

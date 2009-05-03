@@ -116,6 +116,7 @@ public class MIProtocol
                     // got data
                     CacheLine<MILineState> line = data.get(pendingRequest.getInAddress());
                     line.data = msg.data;
+                    line.state = MILineState.MODIFIED;
                     handle_request_locally(line);
                     state = ProtocolState.FinishedRequest;
                     break;
@@ -205,6 +206,7 @@ public class MIProtocol
                 state = ProtocolState.FinishedRequest;
             }
         }
+        Simulator.logEvent("m1-protocol memory instruction: " + resp.toString());
     }
 
     public void runPrep() {
@@ -256,8 +258,8 @@ public class MIProtocol
                 pendingRequest.setIsCompleted(true);
                 break;
             case CAS:
+                pendingRequest.outData = line.data;
                 if (Arrays.equals(line.data, pendingRequest.compareData)) {
-                    pendingRequest.outData = line.data;
                     line.data = pendingRequest.inData;
                 }
                 pendingRequest.setIsCompleted(true);

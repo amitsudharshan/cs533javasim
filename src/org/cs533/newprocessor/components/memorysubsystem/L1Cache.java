@@ -20,36 +20,41 @@ import org.cs533.newprocessor.simulator.Simulator;
  *
  *
  */
-public class L1Cache<BusMessage, LineStates,
-        Protocol extends CoherenceProtocol<BusMessage,LineStates>>
+public class L1Cache<BusMessage, LineStates, Protocol extends CoherenceProtocol<BusMessage, LineStates>>
         implements ComponentInterface, BusClient<BusMessage>, MemoryInterface,
         ProtocolContext<LineStates> {
 
     ProcessorCore core;
     CacheCoherenceBus<BusMessage> bus;
-    ArrayList<MemoryInstruction> pendingRequests =  new ArrayList<MemoryInstruction>();
+    ArrayList<MemoryInstruction> pendingRequests = new ArrayList<MemoryInstruction>();
     Protocol proto;
-    public static final int LATENCY =Globals.L1_CACHE_LATENCY;
+    public static final int LATENCY = Globals.L1_CACHE_LATENCY;
 
-    public L1Cache (Protocol proto) {
+    public L1Cache(Protocol proto) {
         this.proto = proto;
-        data = new LRUEvictHashTable<CacheLine<LineStates>> (Globals.L1_SIZE_IN_NUMBER_OF_LINES);
+        data = new LRUEvictHashTable<CacheLine<LineStates>>(Globals.L1_SIZE_IN_NUMBER_OF_LINES);
         proto.setContext(this);
         Simulator.registerComponent(this);
     }
 
     public MemoryInstruction getNextRequest() {
-        if (pendingRequests.isEmpty())
+        if (pendingRequests.isEmpty()) {
             return null;
-        else
+
+        } else {
             return pendingRequests.remove(0);
+
+        }
     }
     LRUEvictHashTable<CacheLine<LineStates>> data;
-    public LRUEvictHashTable<CacheLine<LineStates>> getData() {return data;}
 
-    public void enqueueMemoryInstruction(MemoryInstruction request)
-    {
+    public LRUEvictHashTable<CacheLine<LineStates>> getData() {
+        return data;
+    }
+
+    public void enqueueMemoryInstruction(MemoryInstruction request) {
         pendingRequests.add(request);
+        Simulator.logEvent("L1-cache memory instruction : " + request.toString());
     }
 
     public L1Cache(ProcessorCore _core, CacheCoherenceBus _bus, Protocol _proto) {
@@ -58,15 +63,31 @@ public class L1Cache<BusMessage, LineStates,
         proto = _proto;
     }
 
-    public void recieveMessage(BusMessage msg) { proto.recieveMessage(msg);}
-    public BusMessage getResponse() {return proto.getResponse();}
-    public BusMessage getBusMessage() {return proto.getBusMessage();}
-    public BusAggregator<BusMessage> getAggregator() {return proto.getAggregator();}
-    public MemoryInstruction getMemoryRequest() {return proto.getMemoryRequest();}
-    public void recieveMemoryResponse(MemoryInstruction resp) { proto.recieveMemoryResponse(resp);}
-    
-    public void runPrep()
-    {
+    public void recieveMessage(BusMessage msg) {
+        proto.recieveMessage(msg);
+    }
+
+    public BusMessage getResponse() {
+        return proto.getResponse();
+    }
+
+    public BusMessage getBusMessage() {
+        return proto.getBusMessage();
+    }
+
+    public BusAggregator<BusMessage> getAggregator() {
+        return proto.getAggregator();
+    }
+
+    public MemoryInstruction getMemoryRequest() {
+        return proto.getMemoryRequest();
+    }
+
+    public void recieveMemoryResponse(MemoryInstruction resp) {
+        proto.recieveMemoryResponse(resp);
+    }
+
+    public void runPrep() {
         proto.runPrep();
     }
 
