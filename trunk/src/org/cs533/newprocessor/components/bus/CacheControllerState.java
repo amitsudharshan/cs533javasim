@@ -2,39 +2,49 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package org.cs533.newprocessor.components.bus;
 
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
 import org.cs533.newprocessor.components.bus.AbstractBusMessage;
+
 /**
  *
  * @author amit
  */
 public abstract class CacheControllerState<Msg extends AbstractBusMessage<Msg>> {
-    public class StateAnd<V> {
-        public final V value;
-        public final CacheControllerState nextState;
-        StateAnd(V value, CacheControllerState next) {
-            this.value = value;
-            this.nextState = next;
-        }
+
+    protected <V> StateAnd<V,CacheControllerState<Msg>> same(V v) {
+        return new StateAnd(v, this);
     }
-    protected <V> StateAnd<V> same(V v) { return new StateAnd(v,this); }
-    protected <V> StateAnd<V> andJump(V v, CacheControllerState next) {
+
+    protected <V> StateAnd<V,CacheControllerState<Msg>> andJump(V v, CacheControllerState next) {
         return new StateAnd(v, next);
     }
 
-    public StateAnd<Msg> recieveBusMessage(Msg b) {
+    protected StateAnd<?,CacheControllerState<Msg>> jump(CacheControllerState next) {
+        return new StateAnd(null,next);
+    }
+
+    protected StateAnd<?,CacheControllerState<Msg>> ignore() {
+        return new StateAnd(null,this);
+    }
+
+    public StateAnd<Msg,CacheControllerState<Msg>> recieveBusMessage(Msg b) {
         return null;
     }
-    public StateAnd<Msg> snoopMemoryResponse(MemoryInstruction response) {
+
+    public StateAnd<Msg,CacheControllerState<Msg>> snoopMemoryResponse(MemoryInstruction response) {
         return null;
     }
-    public StateAnd<MemoryInstruction> recieveClientRequest(MemoryInstruction request) {
+    public StateAnd<Msg,CacheControllerState<Msg>> recieveMemoryResponse(MemoryInstruction response) {
         return null;
     }
-    public StateAnd<Msg> startTransaction() {
+
+    public StateAnd<MemoryInstruction,CacheControllerState<Msg>> recieveClientRequest(MemoryInstruction request) {
+        return null;
+    }
+
+    public StateAnd<Msg,CacheControllerState<Msg>> startTransaction() {
         return null;
     }
 }
