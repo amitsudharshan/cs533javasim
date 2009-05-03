@@ -37,6 +37,7 @@ public class MainMemory implements ComponentInterface, MemoryInterface {
     }
 
     public void enqueueMemoryInstruction(MemoryInstruction instruction) {
+        Simulator.logEvent("main memory memory instruction: " + instruction.toString());
         inQueue.add(instruction);
     }
 
@@ -64,7 +65,7 @@ public class MainMemory implements ComponentInterface, MemoryInterface {
         int byteAddress = toDo.getInAddress() / 8;
         if (toDo.getType() == InstructionType.Store) {
             int counter = 0;
-            for (int i = byteAddress; i < toDo.getInData().length+byteAddress; i++) {
+            for (int i = byteAddress; i < toDo.getInData().length + byteAddress; i++) {
                 memory[i] = toDo.getInData()[counter++];
             }
         } else if (toDo.getType() == InstructionType.Load) {
@@ -83,7 +84,7 @@ public class MainMemory implements ComponentInterface, MemoryInterface {
             }
             if (Arrays.equals(toDo.compareData, toDo.getOutData())) {
                 int counter = 0;
-                for (int i = byteAddress; i < toDo.getInData().length+byteAddress; i++) {
+                for (int i = byteAddress; i < toDo.getInData().length + byteAddress; i++) {
                     memory[i] = toDo.getInData()[counter++];
                 }
             }
