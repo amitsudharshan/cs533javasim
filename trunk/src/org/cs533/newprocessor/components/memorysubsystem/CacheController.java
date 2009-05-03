@@ -16,7 +16,7 @@ import org.cs533.newprocessor.components.bus.StateAnd;
  *
  * @author amit
  */
-public class CacheController<Msg extends AbstractBusMessage<Msg>>
+public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
         implements BusClient<Msg>, ComponentInterface, MemoryInterface {
 
     CacheControllerState<Msg> state;
