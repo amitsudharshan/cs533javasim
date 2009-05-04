@@ -62,7 +62,7 @@ public class MainMemory implements ComponentInterface, MemoryInterface {
     }
 
     public void runMemoryInstruction() {
-        int byteAddress = toDo.getInAddress() / 8;
+        int byteAddress = toDo.getInAddress();
         if (toDo.getType() == InstructionType.Store) {
             int counter = 0;
             for (int i = byteAddress; i < toDo.getInData().length + byteAddress; i++) {

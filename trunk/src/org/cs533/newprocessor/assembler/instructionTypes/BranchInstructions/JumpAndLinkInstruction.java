@@ -43,7 +43,7 @@ public class JumpAndLinkInstruction extends AbstractInstruction implements Branc
     }
 
     public void setPC(RegisterFile reg) {
-        reg.setRetReg(reg.getPC() + (8 * Globals.WORD_SIZE));
+        reg.setRetReg(reg.getPC() + (Globals.WORD_SIZE));
         reg.setPC(label);
     }
 

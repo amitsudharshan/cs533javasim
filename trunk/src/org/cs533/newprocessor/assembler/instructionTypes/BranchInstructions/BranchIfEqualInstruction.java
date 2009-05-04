@@ -38,7 +38,7 @@ public class BranchIfEqualInstruction extends AbstractBranchInstruction {
         if (reg1 == reg2) {
             reg.setPC(label);
         } else {
-            reg.incrementPC(Globals.WORD_SIZE * 8);
+            reg.incrementPC(Globals.WORD_SIZE);
         }
     }
 

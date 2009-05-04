@@ -37,7 +37,7 @@ public class BranchIfLessThanOrEqualToZero extends AbstractBranchInstruction {
         if (reg1 <= 0) {
             reg.setPC(label);
         } else {
-            reg.incrementPC(Globals.WORD_SIZE * 8);
+            reg.incrementPC(Globals.WORD_SIZE );
         }
     }
 
