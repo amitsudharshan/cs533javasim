@@ -96,6 +96,10 @@ public class MemoryInstruction implements Cloneable {
         return outData;
     }
 
+    public byte[] getCompareData() {
+        return compareData;
+    }
+
     public void setOutData(byte[] out) {
         outData = out;
     }

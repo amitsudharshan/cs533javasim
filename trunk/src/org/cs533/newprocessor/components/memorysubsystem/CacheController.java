@@ -19,20 +19,19 @@ import org.cs533.newprocessor.components.bus.StateAnd;
 public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
         implements BusClient<Msg>, ComponentInterface, MemoryInterface {
 
-    CacheControllerState<Msg> state;
-    ArrayDeque<MemoryInstruction> pendingRequests;
-    MemoryInstruction incomingRequest;
-    boolean currentRequestAccepted = false;
-    MemoryInstruction currentRequest;
-    Msg busRequest;
-    Msg responseToBus;
-    boolean busResponseRead = false;
-    Msg currentTransaction;
-    MemoryInstruction recievedMemoryResponse;
+    protected CacheControllerState<Msg> state;
+    protected ArrayDeque<MemoryInstruction> pendingRequests;
+    protected MemoryInstruction incomingRequest;
+    protected MemoryInstruction currentRequest;
+    protected Msg busMessage;
+    protected Msg responseToBus;
+    protected boolean busResponseRead = false;
+    protected Msg currentTransaction;
+    protected MemoryInstruction recievedMemoryResponse;
 
     public void recieveMessage(Msg msg) {
-        assert (busRequest == null);
-        busRequest = msg;
+        assert (busMessage == null);
+        busMessage = msg;
     }
 
     // probably the bus will only ask us once after
@@ -90,15 +89,19 @@ public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
             pendingRequests.addLast(incomingRequest);
             incomingRequest = null;
         }
-        if (currentRequest == null) {
-            currentRequest = pendingRequests.pollFirst();
-        }
+        StateAnd<MemoryInstruction, CacheControllerState<Msg>> reply;
         if (currentRequest != null) {
-            StateAnd<MemoryInstruction, CacheControllerState<Msg>> reply =
-                    state.recieveClientRequest(incomingRequest);
-            if (reply != null) {
-                currentRequestAccepted = true;
-                state = reply.nextState;
+            reply = state.pollRequestStatus(currentRequest);
+        } else {
+            currentRequest = pendingRequests.peekFirst();
+            if (currentRequest != null) {
+                reply = state.recieveClientRequest(currentRequest);
+            } else {
+                reply = null;
+            }
+        }
+        if (reply != null) {
+            state = reply.nextState;
                 MemoryInstruction resp = reply.value;
                 if (resp != null) {
                     if (resp != currentRequest) {
@@ -108,20 +111,21 @@ public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
                     }
                     currentRequest.setIsCompleted(true);
                     currentRequest = null;
-                    currentRequestAccepted = false;
                 }
             }
-        }
 
-        StateAnd<Msg, CacheControllerState<Msg>> response = state.recieveBusMessage(busRequest);
-        assert (response != null);
-        if (currentTransaction != null) {
-            currentTransaction = response.value;
-        } else {
+        // FIXME tracking of currentTransaction - properly ending when aggregator and memory instruction null, etc.
+        if (busMessage != null) {
+            StateAnd<Msg, CacheControllerState<Msg>> response;
+            if (currentTransaction != null) {
+                response = state.recieveBusResponse(busMessage);
+                currentTransaction = response.value;
+            } else {
+                response = state.recieveBroadcastMessage(busMessage);
+            }
             responseToBus = response.value;
+            state = response.nextState;
         }
-        state = response.nextState;
-        busRequest = null;
 
         if (recievedMemoryResponse != null) {
             if (currentTransaction != null) {

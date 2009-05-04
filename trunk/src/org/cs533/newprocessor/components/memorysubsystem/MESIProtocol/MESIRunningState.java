@@ -1,0 +1,96 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package org.cs533.newprocessor.components.memorysubsystem.MESIProtocol;
+
+import org.cs533.newprocessor.components.bus.CacheControllerState;
+import org.cs533.newprocessor.components.bus.StateAnd;
+import org.cs533.newprocessor.components.memorysubsystem.CacheLine;
+import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
+import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction.InstructionType;
+
+/**
+ * We own the bus and are waiting for a reply.
+ * @author amit
+ */
+public class MESIRunningState extends MESICacheControllerState {
+
+    MESIBusMessage currentRound;
+    final MemoryInstruction pendingRequest;
+
+    public MESIRunningState(MESIBusMessage currentRound, MemoryInstruction pendingRequest, MESICacheController controller) {
+        super(controller);
+        this.currentRound = currentRound;
+        this.pendingRequest = pendingRequest;
+    }
+
+    @Override
+    public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveMemoryResponse(MemoryInstruction response) {
+        if (response.getType() == InstructionType.Load) {
+            // must have been handling a Nack on a cache-to-cache get.
+            assert response.getInAddress() == pendingRequest.getInAddress();
+            CacheLine<MESILineState> line = controller.data.get(pendingRequest.getInAddress());
+            if (line == null) {
+                line = new CacheLine<MESILineState>(response, MESILineState.EXCLUSIVE);
+                controller.data.add(line);
+            }
+            return handleClientRequestAsMessage(pendingRequest, line);
+        } else {
+            // Either we were writing back a dirty-acked line we got from another client,
+            // or evicting a line prior to even beginning our transaction. In both cases
+            // we set up the line state ahead of time, so just do our request.
+            // we set up the desired line state ahead of time, so just try the request.
+            return handleClientRequestAsMessage(pendingRequest, controller.data.get(pendingRequest.getInAddress()));
+        }
+    }
+
+    @Override
+    public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveBusResponse(MESIBusMessage b) {
+        CacheLine<MESILineState> line;
+        // must have been a cache to cache round requiring a response: Get or GetX
+        switch (b.type) {
+            case Nack:
+                // getting from memory - line will be exclusive.
+                currentRound = MESIBusMessage.Load(pendingRequest.getInAddress());
+                return noJump(currentRound);
+            case AckData:
+                // got from other cache, go Shared / Exclusive as Get specified
+                line = controller.data.get(pendingRequest.getInAddress());
+                line.data = b.data;
+                switch (currentRound.type) {
+                    case Get:
+                        line.state = MESILineState.SHARED;
+                        break;
+                    case GetX:
+                        line.state = MESILineState.EXCLUSIVE;
+                        break;
+                    default:
+                        controller.logger.fatal(("Apparently got ack in response to no-reply request type " + currentRound.type.toString()));
+                        throw new RuntimeException();
+                }
+                return handleClientRequestAsMessage(pendingRequest, line);
+            case AckDirty:
+                // got line from other cache, store it in ours as above,
+                // but arrange to writeback before we process
+                line = controller.data.get(pendingRequest.getInAddress());
+                line.data = b.data;
+                switch (currentRound.type) {
+                    case Get:
+                        line.state = MESILineState.SHARED;
+                        break;
+                    case GetX:
+                        line.state = MESILineState.EXCLUSIVE;
+                        break;
+                    default:
+                        controller.logger.fatal(("Apparently got ack in response to no-reply request type " + currentRound.type.toString()));
+                        throw new RuntimeException();
+                }
+                currentRound = MESIBusMessage.Writeback(b.address, b.data);
+                return noJump(currentRound);
+            default:
+                controller.logger.fatal("Unexpected bus response type " + b.type.toString());
+                throw new RuntimeException();
+        }
+    }
+}

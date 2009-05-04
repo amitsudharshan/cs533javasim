@@ -11,8 +11,8 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
  * @author amit
  */
 public class AbstractBusMessage<M extends AbstractBusMessage<M>> {
-    BusAggregator<M> aggregator;
-    MemoryInstruction memoryRequest;
+    protected BusAggregator<M> aggregator;
+    protected MemoryInstruction memoryRequest;
 
     public BusAggregator<M> getAggregator() {
         return aggregator;
