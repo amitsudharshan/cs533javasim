@@ -9,6 +9,7 @@ import org.cs533.newprocessor.components.bus.CoherenceProtocol;
 import org.cs533.newprocessor.components.bus.ProtocolContext;
 import org.cs533.newprocessor.simulator.Simulator;
 import java.util.Arrays;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -17,6 +18,7 @@ import java.util.Arrays;
 public class MIProtocol
         implements CoherenceProtocol<MIProtocol.MIBusMessage, MIProtocol.MILineState> {
 
+    static Logger logger = Logger.getLogger(MIProtocol.class);
     ProtocolContext<MILineState> context;
     MemoryInstruction pendingRequest;
     CacheLine<MILineState> evictedLine;
@@ -206,7 +208,7 @@ public class MIProtocol
                 state = ProtocolState.FinishedRequest;
             }
         }
-        Simulator.logEvent("m1-protocol memory instruction: " + resp.toString());
+        logger.debug("m1-protocol memory instruction: " + resp.toString());
     }
 
     public void runPrep() {

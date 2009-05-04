@@ -6,6 +6,7 @@ package org.cs533.newprocessor.components.memorysubsystem;
 
 import java.util.ArrayList;
 
+import org.apache.log4j.Logger;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
 import org.cs533.newprocessor.components.bus.BusAggregator;
@@ -24,6 +25,8 @@ public class L1Cache<BusMessage, LineStates, Protocol extends CoherenceProtocol<
         implements ComponentInterface, BusClient<BusMessage>, MemoryInterface,
         ProtocolContext<LineStates> {
 
+
+    static Logger logger = Logger.getLogger(L1Cache.class.getName());
     ProcessorCore core;
     CacheCoherenceBus<BusMessage> bus;
     ArrayList<MemoryInstruction> pendingRequests = new ArrayList<MemoryInstruction>();
@@ -54,7 +57,7 @@ public class L1Cache<BusMessage, LineStates, Protocol extends CoherenceProtocol<
 
     public void enqueueMemoryInstruction(MemoryInstruction request) {
         pendingRequests.add(request);
-        Simulator.logEvent("L1-cache memory instruction : " + request.toString());
+        logger.debug(request);
     }
 
     public L1Cache(ProcessorCore _core, CacheCoherenceBus _bus, Protocol _proto) {
