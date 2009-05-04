@@ -6,6 +6,7 @@ package org.cs533.newprocessor.components.memorysubsystem;
 
 import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.log4j.Logger;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction.InstructionType;
@@ -18,6 +19,8 @@ import org.cs533.newprocessor.simulator.Simulator;
 public class MainMemory implements ComponentInterface, MemoryInterface {
 
     public static final int LATENCY = Globals.MAIN_MEMORY_LATENCY; // MADE UP VALUE HERE
+
+    static Logger logger = Logger.getLogger(MainMemory.class.getName());
     /* input port */
     LinkedBlockingQueue<MemoryInstruction> inQueue;
     /* state variables */
@@ -37,7 +40,7 @@ public class MainMemory implements ComponentInterface, MemoryInterface {
     }
 
     public void enqueueMemoryInstruction(MemoryInstruction instruction) {
-        Simulator.logEvent("main memory memory instruction: " + instruction.toString());
+        logger.debug("main memory memory instruction: " + instruction.toString());
         inQueue.add(instruction);
     }
 

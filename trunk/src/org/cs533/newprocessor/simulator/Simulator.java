@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
-import java.util.logging.Logger;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.cs533.newprocessor.AsyncComponentInterface;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
@@ -27,6 +29,7 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
 public class Simulator {
 
     static ArrayList<AsyncComponentInterface> components = new ArrayList<AsyncComponentInterface>();
+    static Logger logger = Logger.getLogger(Simulator.class.getName());
     static final HashMap<String, Integer> eventCounter = new HashMap<String, Integer>();
     static Thread simulatorThread;
     static boolean isRunning = false;
@@ -45,7 +48,6 @@ public class Simulator {
 
     public static void logEvent(String event) {
         synchronized (eventCounter) {
-            // System.out.println(event);
             Integer count = eventCounter.get(event);
             if (count == null) {
                 count = new Integer(1);
@@ -53,7 +55,7 @@ public class Simulator {
                 count = new Integer(count + 1);
             }
             eventCounter.put(event, count);
-            System.out.println("log: " + event);
+            logger.debug("log: " + event);
         }
     }
 
@@ -66,6 +68,9 @@ public class Simulator {
     }
 
     public static void main(String[] args) throws Exception {
+
+        Logger.getRootLogger().setLevel(Level.INFO);
+        BasicConfigurator.configure();
         String asmFileName = "/home/amit/NetBeansProjects/newcs533javasim/src/org/cs533/asm/cands.asm";
         if (args.length > 0) {
             asmFileName = args[0];
@@ -90,6 +95,7 @@ public class Simulator {
             Thread.sleep(10);
         }
         stopSimulation();
+        printStatistics();
     }
 
     public static void registerComponent(ComponentInterface component) {
@@ -165,7 +171,7 @@ public class Simulator {
                         Thread.sleep(Long.MAX_VALUE);
                     }
                 } catch (InterruptedException ex) {
-                    Logger.getAnonymousLogger().info("recieved interrupt probably caused by stop call");
+                    logger.info("recieved interrupt probably caused by stop call");
                 }
                 for (int i = 0; i < workers.length; ++i) {
                     workers[i].interrupt();

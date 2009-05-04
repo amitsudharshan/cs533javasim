@@ -4,9 +4,9 @@
  */
 package org.cs533.newprocessor.simulator.test;
 
-import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;
 import org.cs533.newprocessor.components.bus.CacheCoherenceBus;
 import org.cs533.newprocessor.components.memorysubsystem.L1Cache;
@@ -24,8 +24,12 @@ public class TestCacheProtocol {
 
     static final int FIRST_STORE_VALUE = 35232;
     static final int SECOND_STORE_VALUE = 52342;
+    static Logger logger = Logger.getLogger(TestCacheProtocol.class.getName());
 
     public static void main(String[] args) {
+
+        Logger.getRootLogger().setLevel(Level.INFO);
+        BasicConfigurator.configure();
         try {
             //instantiate and register all clients
             MemoryInterface m = new MainMemory();

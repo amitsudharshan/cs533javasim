@@ -37,7 +37,6 @@ public class CompareAndSwapInstruction extends AbstractInstruction implements Me
 
     public CompareAndSwapInstruction(int instruction) {
         this();
-        System.out.println("Creating CAS!");
         setRegisters(instruction);
     }
 

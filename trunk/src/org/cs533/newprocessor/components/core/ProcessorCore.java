@@ -4,6 +4,7 @@
  */
 package org.cs533.newprocessor.components.core;
 
+import org.apache.log4j.Logger;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
 import org.cs533.newprocessor.assembler.abstractandinterface.ALUInstructionInterface;
@@ -15,17 +16,18 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
 import org.cs533.newprocessor.simulator.Simulator;
 
-
-
 /**
  *
  * @author amit
  */
 public class ProcessorCore implements ComponentInterface {
 
+    static Logger logger = Logger.getLogger(ProcessorCore.class.getName());
+
     public int getLatency() {
         return LATENCY;
     }
+
 
     enum ProcessingStates {
 
@@ -58,6 +60,7 @@ public class ProcessorCore implements ComponentInterface {
     /* State if in Halt state */
     boolean isHalted = false;
 
+
     public ProcessorCore(int _startPC, MemoryInterface memory, int coreNumber_) {
         rFile.setPC(_startPC);
         mainMemory = memory;
@@ -86,7 +89,7 @@ public class ProcessorCore implements ComponentInterface {
                     mainMemory.enqueueMemoryInstruction(fetchInstruction);
                 } else if (fetchInstructionCompleted) {
                     instruction = AbstractInstruction.byteArrayToInt(fetchInstruction.getOutData());
-                    System.out.println("GOT INSTRUCTION \n" + AbstractInstruction.zeroPadIntForString(instruction, 32) + "\n\n\n");
+                    logger.debug("GOT INSTRUCTION \n" + AbstractInstruction.zeroPadIntForString(instruction, 32) + "\n\n\n");
                     fetchInstruction = null;
                     currentState = ProcessingStates.decode;
                 }
@@ -134,16 +137,16 @@ public class ProcessorCore implements ComponentInterface {
                 } else {
                     rFile.incrementPC(Globals.WORD_SIZE);
                 }
-                System.out.println("We have just finished executing:  in coreNumber #" + coreNumber + " with PC value 0x" + Integer.toHexString(rFile.getPC()) + " \n " + abstrInstr.toString());
-                System.out.println(rFile);
-                System.out.println("--------------------");
+                logger.debug("We have just finished executing:  in coreNumber #" + coreNumber + " with PC value 0x" + Integer.toHexString(rFile.getPC()) + " \n " + abstrInstr.toString());
+                logger.debug(rFile);
+                logger.debug("--------------------");
                 currentState = ProcessingStates.fetch;
                 break;
             case halt:
                 if (!isHalted) {
-                    System.out.println("We have just halted the core #" + coreNumber + " \n " + abstrInstr);
-                    System.out.println(rFile);
-                    System.out.println("-------------------------");
+                    logger.debug("We have just halted the core #" + coreNumber + " \n " + abstrInstr);
+                    logger.debug(rFile);
+                    logger.debug("-------------------------");
                 }
                 isHalted = true;
                 break;
