@@ -13,7 +13,7 @@ import org.cs533.newprocessor.components.bus.AbstractBusMessage;
  */
 public abstract class CacheControllerState<Msg extends AbstractBusMessage<Msg>> {
 
-    protected final <V> StateAnd<V, CacheControllerState<Msg>> sameState(V v) {
+    protected final <V> StateAnd<V, CacheControllerState<Msg>> noJump(V v) {
         return new StateAnd(v, this);
     }
 
@@ -21,7 +21,7 @@ public abstract class CacheControllerState<Msg extends AbstractBusMessage<Msg>> 
         return new StateAnd(v, next);
     }
 
-    protected final <V> StateAnd<V, CacheControllerState<Msg>> jump(CacheControllerState next) {
+    protected final <V> StateAnd<V, CacheControllerState<Msg>> jumpTo(CacheControllerState next) {
         return new StateAnd(null, next);
     }
 
@@ -29,7 +29,11 @@ public abstract class CacheControllerState<Msg extends AbstractBusMessage<Msg>> 
         return new StateAnd(null, this);
     }
 
-    public StateAnd<Msg, CacheControllerState<Msg>> recieveBusMessage(Msg b) {
+    public StateAnd<Msg, CacheControllerState<Msg>> recieveBroadcastMessage(Msg b) {
+        return null;
+    }
+
+    public StateAnd<Msg, CacheControllerState<Msg>> recieveBusResponse(Msg b) {
         return null;
     }
 
@@ -44,6 +48,11 @@ public abstract class CacheControllerState<Msg extends AbstractBusMessage<Msg>> 
     public StateAnd<MemoryInstruction, CacheControllerState<Msg>> recieveClientRequest(MemoryInstruction request) {
         return null;
     }
+
+    public StateAnd<MemoryInstruction, CacheControllerState<Msg>> pollRequestStatus(MemoryInstruction request) {
+        return null;
+    }
+
 
     public StateAnd<Msg, CacheControllerState<Msg>> startTransaction() {
         return null;
