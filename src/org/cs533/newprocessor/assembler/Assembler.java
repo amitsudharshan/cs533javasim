@@ -137,7 +137,7 @@ public class Assembler {
                     long value = Long.decode(split[1]);
                     int toAdd = (int) (value & 0xFFFFFFFF);
                     memoryImage.add(toAdd);
-                    nextAddress = nextAddress + (Globals.WORD_SIZE * 8);
+                    nextAddress = nextAddress + (Globals.WORD_SIZE * 1);
 
                 } else {
                     throw new java.lang.RuntimeException("in data state found non matching instruction for line \n " + line);
@@ -155,11 +155,11 @@ public class Assembler {
                         throw new java.lang.RuntimeException("found an invalid instruction with line: \n\t" + line);
                     } else if (instruction.getFlag() == ParserReturnValues.success) {
                         memoryImage.add(instruction.getInstruction());
-                        nextAddress = nextAddress + (Globals.WORD_SIZE * 8);
+                        nextAddress = nextAddress + (Globals.WORD_SIZE * 1);
                     } else if (instruction.getFlag() == ParserReturnValues.missinglabel || instruction.getFlag() == ParserReturnValues.missingvariable) {
                         memoryImage.add(-1);
                         instructionsToFix.add(new int[]{memoryImage.size() - 1, lineIndex});
-                        nextAddress = nextAddress + (Globals.WORD_SIZE * 8);
+                        nextAddress = nextAddress + (Globals.WORD_SIZE * 1);
                     }
                 }
                 break;

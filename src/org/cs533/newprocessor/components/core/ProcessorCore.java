@@ -132,7 +132,7 @@ public class ProcessorCore implements ComponentInterface {
                 if (abstrInstr.getType() == InstructionTypes.branch) {
                     ((BranchInstructionInterface) abstrInstr).setPC(rFile);
                 } else {
-                    rFile.incrementPC(8 * Globals.WORD_SIZE);
+                    rFile.incrementPC(Globals.WORD_SIZE);
                 }
                 System.out.println("We have just finished executing:  in coreNumber #" + coreNumber + " with PC value 0x" + Integer.toHexString(rFile.getPC()) + " \n " + abstrInstr.toString());
                 System.out.println(rFile);

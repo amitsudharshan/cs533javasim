@@ -66,7 +66,7 @@ public class Simulator {
     }
 
     public static void main(String[] args) throws Exception {
-        String asmFileName = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/cands.asm";
+        String asmFileName = "/home/amit/NetBeansProjects/newcs533javasim/src/org/cs533/asm/cands.asm";
         if (args.length > 0) {
             asmFileName = args[0];
         }
@@ -79,7 +79,7 @@ public class Simulator {
         for (int i = 0; i < pCore.length; i++) {
             MemoryInterface l1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
             bus.registerClient((L1Cache) l1);
-            pCore[i] = new ProcessorCore(pcStart[i], l1, i);
+            pCore[i] = new ProcessorCore(pcStart[i], m, i);
         }
         runSimulation();
         int doneProcessor = 0;
