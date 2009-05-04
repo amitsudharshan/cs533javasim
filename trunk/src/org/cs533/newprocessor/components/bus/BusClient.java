@@ -41,10 +41,20 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
  * @author brandon
  */
 public interface BusClient<BusMessage> {
+    // you are not allowed to change the value returned by the getters
+    // when this is called (or, as usual, for any other reason).
+    // May be called before or after your own runPrep - your state
+    // at the end of runPrep may not depend on this order.
+    // Will be called at most once per runPrep by a bus.
     void recieveMessage(BusMessage msg);
     BusMessage getResponse();
     BusMessage getBusMessage();
+    // Ownership of the aggregator is given to the bus, which will call
+    // it unpredictably.
     BusAggregator<BusMessage> getAggregator();
     MemoryInstruction getMemoryRequest();
+    // Will be called at most once per runPrep by a bus.
+    // May be called before or after your own runPrep - your state
+    // at the end of runPrep may not depend on this order.
     void recieveMemoryResponse(MemoryInstruction resp);
 };
