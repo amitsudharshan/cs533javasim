@@ -19,13 +19,13 @@ import org.cs533.newprocessor.components.memorysubsystem.MESIProtocol.MESIBusMes
  */
 public class MESICacheController extends CacheController<MESIBusMessage> {
 
-    static Logger logger = Logger.getLogger(L1Cache.class.getName());
+    static Logger logger = Logger.getLogger(MESICacheController.class);
     int cacheID;
 
 
     final LRUEvictHashTable<CacheLine<MESILineState>> data;
 
-    MESICacheController(int cacheID_) {
+    public MESICacheController(int cacheID_) {
         super();
         cacheID = cacheID_;
         data = new LRUEvictHashTable<CacheLine<MESILineState>>(Globals.L1_SIZE_IN_NUMBER_OF_LINES);

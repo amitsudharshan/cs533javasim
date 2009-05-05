@@ -25,10 +25,11 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> snoopMemoryResponse(MemoryInstruction response) {
-        return ignore();
+        return noReply();
     }
 
     protected final StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> handleBroadcastMessage (MESIBusMessage b) {
+        controller.logger.debug("handleBroadcastMessage");
         CacheLine<MESILineState> line;
         switch (b.type) {
             case Get:
@@ -69,31 +70,32 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
                 // should only occur when upgrading a SHARED line to exclusive
                 line = controller.data.get(b.address);
                 if (line == null) {
-                    return noJump(MESIBusMessage.Nack());
+                    return noReply();
                 } else {
                     switch (line.state) {
                         case SHARED:
                             line.state = MESILineState.INVALID;
                         case INVALID:
-                            return noJump(MESIBusMessage.Nack());
+                            return noReply();
                         default:
                             controller.logger.fatal("Got INVALIDATE in state " + line.state.toString());
                             throw new RuntimeException();
                     }
                 }
+            case Load:
             case Writeback:
-                // someone else had the line modified, so we can only have it INVALID.
+                // someone else had to go to memory for the line, so we may only have it in INVALID state.
                 line = controller.data.get(b.address);
                 if (line != null && line.state != MESILineState.INVALID) {
-                    controller.logger.fatal("Got WRITEBACK in state " + line.state.toString());
+                    controller.logger.fatal("Got "+b.type.toString()+" in state " + line.state.toString());
                     throw new RuntimeException();
                 } else {
-                    return ignore();
+                    return noReply();
                 }
             case Nack:
             case AckData:
             case AckDirty:
-                return ignore();
+                return noReply();
             default:
                 controller.logger.fatal("Unknown bus message type " + b.type.toString());
                 throw new RuntimeException();

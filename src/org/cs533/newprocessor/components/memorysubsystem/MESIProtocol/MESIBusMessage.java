@@ -23,7 +23,6 @@ public class MESIBusMessage extends AbstractBusMessage<MESIBusMessage> {
                 }
             }
         }
-        // TODO - some error checking about conflicting updates?
         public MESIBusMessage getResult() {
             if (ack != null) {
                 return ack;
@@ -31,6 +30,11 @@ public class MESIBusMessage extends AbstractBusMessage<MESIBusMessage> {
                 return MESIBusMessage.Nack();
             }
         }
+    }
+
+    @Override
+    public String getTypeString() {
+        return type.toString();
     }
     private MESIBusMessage(MESIBusMessage.MESIBusMessageType type, int address, byte[] data,
             BusAggregator<MESIBusMessage> aggregator, MemoryInstruction memoryRequest) {

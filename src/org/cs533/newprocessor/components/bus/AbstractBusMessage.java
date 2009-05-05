@@ -17,8 +17,10 @@ public class AbstractBusMessage<M extends AbstractBusMessage<M>> {
     public BusAggregator<M> getAggregator() {
         return aggregator;
     }
-
     public MemoryInstruction getMemoryRequest() {
         return memoryRequest;
+    }
+    public String getTypeString() {
+        return null;
     }
 }
