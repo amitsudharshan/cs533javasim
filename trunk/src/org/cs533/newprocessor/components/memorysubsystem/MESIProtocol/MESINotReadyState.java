@@ -1,6 +1,5 @@
 package org.cs533.newprocessor.components.memorysubsystem.MESIProtocol;
 
-import java.util.Arrays;
 import org.cs533.newprocessor.components.bus.CacheControllerState;
 import org.cs533.newprocessor.components.bus.StateAnd;
 import org.cs533.newprocessor.components.memorysubsystem.CacheLine;
@@ -8,25 +7,28 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
 
 public class MESINotReadyState extends MESICacheControllerState {
 
-    MESICacheController controller;
-
     public MESINotReadyState(MESICacheController controller) {
         super(controller);
     }
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveBroadcastMessage(MESIBusMessage b) {
-        return handleBroadcastMessage(b);
+        MESICacheController.logger.debug("recieveBroadcastMessage");
+        StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> action = handleBroadcastMessage(b);
+        MESICacheController.logger.debug(action.toString());
+        return action;
     }
 
     @Override
     public StateAnd<MemoryInstruction, CacheControllerState<MESIBusMessage>> recieveClientRequest(MemoryInstruction request) {
-        // FIXME - do we have to install an invalid line here?
-        CacheLine<MESILineState> evicted = controller.data.reserveSpace(request.getInAddress());
-        if (evicted != null) {
-            return jumpTo(new MESIReadyState(MESIBusMessage.Writeback(evicted.address, evicted.data), request, controller));
-        }
         CacheLine<MESILineState> line = controller.data.get(request.getInAddress());
+        if (line == null) {
+            line = new CacheLine<MESILineState>(request.getInAddress(), null, MESILineState.INVALID);
+            CacheLine<MESILineState> evicted = controller.data.add(line);
+             if (evicted != null) {
+                return jumpTo(new MESIReadyState(MESIBusMessage.Writeback(evicted.address, evicted.data), request, controller));
+            }
+        }
         return handleClientRequestAsMemory(request, line);
     }
 }

@@ -10,6 +10,8 @@ import org.apache.log4j.Logger;
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;
 import org.cs533.newprocessor.components.bus.CacheCoherenceBus;
 import org.cs533.newprocessor.components.memorysubsystem.L1Cache;
+import org.cs533.newprocessor.components.memorysubsystem.MESIProtocol.MESIBusMessage;
+import org.cs533.newprocessor.components.memorysubsystem.MESIProtocol.MESICacheController;
 import org.cs533.newprocessor.components.memorysubsystem.MIProtocol;
 import org.cs533.newprocessor.components.memorysubsystem.MainMemory;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
@@ -28,16 +30,20 @@ public class TestCacheProtocol {
 
     public static void main(String[] args) {
 
-        Logger.getRootLogger().setLevel(Level.INFO);
+        Logger.getRootLogger().setLevel(Level.ALL);;
         BasicConfigurator.configure();
         try {
             //instantiate and register all clients
             MemoryInterface m = new MainMemory();
-            CacheCoherenceBus<MIProtocol.MIBusMessage> bus = new CacheCoherenceBus<MIProtocol.MIBusMessage>(m);
-            MemoryInterface firstL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
-            MemoryInterface secondL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
-            bus.registerClient((L1Cache) firstL1);
-            bus.registerClient((L1Cache) secondL1);
+            CacheCoherenceBus<MESIBusMessage> bus = new CacheCoherenceBus<MESIBusMessage>(m);
+            // MemoryInterface firstL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
+            // MemoryInterface secondL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
+            MESICacheController firstL1 = new MESICacheController(1);
+            MESICacheController secondL1 = new MESICacheController(2);
+
+
+            bus.registerClient(firstL1);
+            bus.registerClient(secondL1);
 
             //start the simulation
             Simulator.runSimulation();

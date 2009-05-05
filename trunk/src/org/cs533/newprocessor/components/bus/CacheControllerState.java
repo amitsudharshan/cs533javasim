@@ -25,7 +25,7 @@ public abstract class CacheControllerState<Msg extends AbstractBusMessage<Msg>> 
         return new StateAnd(null, next);
     }
 
-    protected final <V> StateAnd<V, CacheControllerState<Msg>> ignore() {
+    protected final <V> StateAnd<V, CacheControllerState<Msg>> noReply() {
         return new StateAnd(null, this);
     }
 
