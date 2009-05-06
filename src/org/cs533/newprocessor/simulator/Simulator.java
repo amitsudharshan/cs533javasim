@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -130,6 +132,10 @@ public class Simulator {
             this.component = c;
         }
 
+        public String toString() {
+            return "ComponentWrapper("+component.toString()+")";
+        }
+
         public void configure(CyclicBarrier prepBarrier, CyclicBarrier clockBarrier) {
             this.prepBarrier = prepBarrier;
             this.clockBarrier = clockBarrier;
@@ -155,12 +161,12 @@ public class Simulator {
     public static void runSimulation() {
         isRunning = true;
         final Thread[] workers = new Thread[components.size()];
-        final CyclicBarrier prepStart = new CyclicBarrier(components.size());
-        final CyclicBarrier clockStart = new CyclicBarrier(components.size());
+        final CyclicBarrier prepStart = new CyclicBarrier(components.size()+1);
+        final CyclicBarrier clockStart = new CyclicBarrier(components.size()+1);
         for (int i = 0; i < workers.length; i++) {
             AsyncComponentInterface r = components.get(i);
             r.configure(prepStart, clockStart);
-            workers[i] = new Thread(r);
+            workers[i] = new Thread(r,r.toString()+"-"+Integer.toString(i));
             workers[i].start();
         }
         simulatorThread = new Thread(new Runnable() {
@@ -168,11 +174,17 @@ public class Simulator {
             public void run() {
                 try {
                     while (true) {
-                        Thread.sleep(Long.MAX_VALUE);
+                        prepStart.await(3,TimeUnit.SECONDS);
+                        clockStart.await(3,TimeUnit.SECONDS);
                     }
                 } catch (InterruptedException ex) {
                     logger.info("recieved interrupt probably caused by stop call");
+                } catch (BrokenBarrierException b) {
+                    logger.warn("Simulator thread got BorkenBarrier exception, worker thread killed by someone else");
+                } catch (TimeoutException t) {
+                    logger.fatal("A simluator phase stalled for at least 3 seconds");
                 }
+
                 for (int i = 0; i < workers.length; ++i) {
                     workers[i].interrupt();
                 }
@@ -184,7 +196,7 @@ public class Simulator {
                 }
                 isRunning = false;
             }
-        });
+        }, "simulatorThread");
         simulatorThread.start();
     }
 }
