@@ -15,6 +15,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.cs533.newprocessor.Globals;
+import org.cs533.newprocessor.assembler.macros.AbstractMacro;
 import org.cs533.newprocessor.simulator.ExecutableImage;
 
 /**
@@ -66,7 +67,7 @@ public class Assembler {
     }
 
     public static void main(String[] args) throws Exception {
-        String inputFile = "/home/amit/NetBeansProjects/cs533javasim/src/org/cs533/asm/producerconsumerqueue.asm";
+        String inputFile = "/home/amit/NetBeansProjects/newcs533javasim/src/org/cs533/asm/matrixmultiply.c";
         String outputFile = "/home/amit/asm/a.out";
         if (args.length >= 2) {
             inputFile = args[0];
@@ -133,11 +134,21 @@ public class Assembler {
                 if (split[0].equals(".instructions")) {
                     currentSection = Sections.instructions;
                 } else if (split[0].startsWith("$")) {
+                    int toAdd = 0;
+                    int nextOffset = 0;
+                    int brakIndex = split[0].indexOf("[");
+                    if (brakIndex >= 0) {
+                        int rIndex = split[0].indexOf("]");
+                        nextOffset = Integer.parseInt(split[0].substring(brakIndex + 1, rIndex));
+                        System.out.println("got a nextOffset with value " + nextOffset + " for variable: " + split[0]);
+                        split[0] = split[0].substring(0,brakIndex);
+                    } else {
+                        long value = Long.decode(split[1]);
+                        toAdd = (int) (value & 0xFFFFFFFF);
+                    }
                     variableToAddressMap.put(split[0], nextAddress);
-                    long value = Long.decode(split[1]);
-                    int toAdd = (int) (value & 0xFFFFFFFF);
                     memoryImage.add(toAdd);
-                    nextAddress = nextAddress + (Globals.WORD_SIZE * 1);
+                    nextAddress = (nextAddress + nextOffset) + (Globals.WORD_SIZE * 1);
 
                 } else {
                     throw new java.lang.RuntimeException("in data state found non matching instruction for line \n " + line);
@@ -217,7 +228,14 @@ public class Assembler {
         String line = null;
         while ((line = bRead.readLine()) != null) {
             if (line.compareTo("") != 0) {
-                tokens.add(line.trim());
+                String[] newInstructions = AbstractMacro.getMacroForInstruction(line);
+                if (newInstructions != null) {
+                    for (String instr : newInstructions) {
+                        tokens.add(instr.trim());
+                    }
+                } else {
+                    tokens.add(line.trim());
+                }
             }
         }
         return tokens;

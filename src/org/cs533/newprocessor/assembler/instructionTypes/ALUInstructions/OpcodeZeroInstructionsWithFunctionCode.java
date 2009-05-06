@@ -62,9 +62,12 @@ public class OpcodeZeroInstructionsWithFunctionCode extends AbstractInstruction 
         aluFunctionCodes = new HashMap<Integer, String>();
         functionCodeForInstruction = new HashMap<String, Integer>();
         aluFunctionCodes.put(0x20, "add");
-        aluFunctionCodes.put(0x08,"jr");
+        aluFunctionCodes.put(0x18, "mul");
+        aluFunctionCodes.put(0x08, "jr");
         functionCodeForInstruction.put("add", 0x20);
+        functionCodeForInstruction.put("mul", 0x18);
         functionCodeForInstruction.put("jr", 0x08);
+
     }
 
     public void setRegisters(int instruction) {
@@ -136,6 +139,10 @@ public class OpcodeZeroInstructionsWithFunctionCode extends AbstractInstruction 
             int op1 = reg.getValueForRegister(registerSource1);
             int op2 = reg.getValueForRegister(registerSource2);
             reg.setValueForRegister(registerDestination, op1 + op2);
+        } else if (aluFunctionCodes.get(functionCode).equals("mul")) {
+            int op1 = reg.getValueForRegister(registerSource1);
+            int op2 = reg.getValueForRegister(registerSource2);
+            reg.setValueForRegister(registerDestination, op1 * op2);
         }
     }
 
