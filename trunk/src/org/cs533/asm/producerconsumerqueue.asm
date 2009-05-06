@@ -3,6 +3,8 @@
 
 .data
     // this is the lock variable. It is locked with value 1 and unlocked with value 0
+    $firstMatrix[30]
+    $secondMatrix[20]
     $lock 0
     $headOfQueue 0
     $tailOfQueue 0
@@ -10,8 +12,7 @@
 
     #registerInitialization
         //Make r1 stores the lock pointer
-        lui r1 U$lock
-        ori r1 r1 L$lock
+       load r1 $lock
 
         //r2 stores the pointer to our heap
         lui r2 U$heap
