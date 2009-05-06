@@ -118,8 +118,7 @@ public class MainMemory implements ComponentInterface, MemoryInterface {
         return "The value of memory at address = 0x" + Integer.toHexString(address) + " is " + memory[address];
     }
 
-    @Override
-    public String toString() {
+    public String printMemoryContents() {
         StringBuffer toWrite = new StringBuffer();
         toWrite.append("PRINTING CONTENTS OF MAIN MEMORY AT " + System.currentTimeMillis() + ":: \n\n");
         int counter = 0;

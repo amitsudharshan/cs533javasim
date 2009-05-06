@@ -24,13 +24,13 @@ public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
     
     protected CacheControllerState<Msg> state;
     protected ArrayDeque<MemoryInstruction> pendingRequests;
-    protected MemoryInstruction incomingRequest;
     protected MemoryInstruction currentRequest;
-    protected Msg busMessage;
+    protected Msg requestFromBus;
     protected Msg responseToBus;
     protected boolean busResponseRead = false;
     protected Msg currentTransaction;
     protected MemoryInstruction recievedMemoryResponse;
+    private boolean waitingForBusReply = false;
 
     protected CacheController() {
         Simulator.registerComponent(this);
@@ -39,21 +39,39 @@ public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
 
     public void recieveMessage(Msg msg) {
         logger.debug("recieveMessage");
-        assert (busMessage == null);
-        busMessage = msg;
+        if (currentTransaction != null) {
+            StateAnd<Msg, CacheControllerState<Msg>> response =
+                    state.recieveBusResponse(msg);
+            // need to set up next phase right now
+            assert response != null;
+            assert response.value != null;
+            currentTransaction = response.value;
+            state = response.nextState;
+        } else {
+            assert requestFromBus == null;
+            assert responseToBus == null;
+            requestFromBus = msg;
+        }
     }
 
     // probably the bus will only ask us once after
     // each thing that demands a response
     public Msg getResponse() {
-        // logger.debug("getResponse");
-        Msg resp = responseToBus;
+        logger.debug("getResponse");
+        // state was responsible for setting a reply
+        // right away in runClock if one was needed
+        assert responseToBus != null;
+        // bus will not call getResponse again after
+        // getting a response without sending us another
+        // message in between.
+        assert !busResponseRead;
+        waitingForBusReply = true;
         busResponseRead = true;
-        return resp;
+        return responseToBus;
     }
 
     public Msg getBusMessage() {
-        //logger.debug("getBusMessage");
+        logger.debug("getBusMessage");
         StateAnd<Msg, CacheControllerState<Msg>> start = state.startTransaction();
         if (start == null) {
             return null;
@@ -81,98 +99,121 @@ public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
 
     public void recieveMemoryResponse(MemoryInstruction resp) {
         logger.debug("recieveMemoryResponse");
-        assert (recievedMemoryResponse == null);
-        recievedMemoryResponse = resp;
+        if (currentTransaction != null) {
+            StateAnd<Msg,CacheControllerState<Msg>> response =
+                state.recieveMemoryResponse(resp);
+            assert response != null;
+            assert response.value != null;
+            currentTransaction = response.value;
+            state = response.nextState;
+        } else {
+            // a client
+            assert (recievedMemoryResponse == null);
+            recievedMemoryResponse = resp;
+        }
     }
 
     public void enqueueMemoryInstruction(MemoryInstruction instr) {
         logger.debug("enqueueMemoryInstruction");
-        assert (incomingRequest == null);
-        incomingRequest = instr;
+        pendingRequests.addLast(instr);
     }
 
     public void runPrep() {
     }
 
     public void runClock() {
-        //logger.debug("runClock");
+        // logger.debug("runClock");
         if (busResponseRead) {
             responseToBus = null;
             busResponseRead = false;
         }
-
-        if (incomingRequest != null) {
-            logger.debug("got memory instruction");
-            pendingRequests.addLast(incomingRequest);
-            incomingRequest = null;
-        }
-        StateAnd<MemoryInstruction, CacheControllerState<Msg>> reply;
         if (currentRequest != null) {
             // logger.debug("checking if current memory request is completed");
-            reply = state.pollRequestStatus(currentRequest);
-        } else {
-            currentRequest = pendingRequests.peekFirst();
-            if (currentRequest != null) {
-                logger.debug("pulled a memory instruction off the queue");
-                reply = state.recieveClientRequest(currentRequest);
-            } else {
-                //logger.debug("no current or pending requests");
-                reply = null;
-            }
-        }
-        if (reply != null) {
-            state = reply.nextState;
-                MemoryInstruction resp = reply.value;
-                if (resp != null) {
-                    logger.debug("memory request finished");
-                    if (resp != currentRequest) {
-                        assert (resp.type == currentRequest.type);
-                        assert (resp.inAddress == currentRequest.inAddress);
-                        currentRequest.setOutData(resp.getOutData());
+            StateAnd<MemoryInstruction, CacheControllerState<Msg>> response
+                = state.pollRequestStatus(currentRequest);
+            if (response != null) {
+                state = response.nextState;
+                MemoryInstruction reply = response.value;
+                if (reply != null) {
+                    // actuall done with the memory request.
+                    assert reply.type == currentRequest.type;
+                    assert reply.getInAddress() == currentRequest.getInAddress();
+                    if (reply != currentRequest) {
+                        currentRequest.setOutData(reply.getOutData());
                     }
+                    // set is completed, client will notice by polling
                     currentRequest.setIsCompleted(true);
                     currentRequest = null;
-                } else {
-                    logger.debug("transitioning to handle request");
                 }
             }
-
-        // FIXME tracking of currentTransaction - properly ending when aggregator and memory instruction null, etc.
-        if (busMessage != null) {
-            StateAnd<Msg, CacheControllerState<Msg>> response;
-            if (currentTransaction != null) {
-                logger.debug("recieved bus message - response");
-                response = state.recieveBusResponse(busMessage);
-                currentTransaction = response.value;
+        } else {
+            MemoryInstruction nextRequest = pendingRequests.peekFirst();
+            if (nextRequest != null) {
+                logger.debug("pulled a memory instruction off the queue");
+                StateAnd<MemoryInstruction, CacheControllerState<Msg>> response
+                    = state.recieveClientRequest(nextRequest);
+                if (response != null) {
+                    // state accepted the client request
+                    currentRequest = nextRequest;
+                    MemoryInstruction reply = response.value;
+                    if (reply != null) {
+                        //state handled right away
+                        // actuall done with the memory request.
+                        assert reply.type == currentRequest.type;
+                        assert reply.getInAddress() == currentRequest.getInAddress();
+                        if (reply != currentRequest) {
+                            currentRequest.setOutData(reply.getOutData());
+                        }
+                        // set is completed, client will notice by polling
+                        currentRequest.setIsCompleted(true);
+                        currentRequest = null;
+                    }
+                    // otherwise we will have to keep polling state as above.
+                }
             } else {
-                logger.debug("recieved bus message - other's broadcast");
-                response = state.recieveBroadcastMessage(busMessage);
+                //logger.debug("no current or pending requests");
             }
-            assert response != null;
-            busMessage = null;
-            if (response.value == null) {
-                logger.debug("no response");
-                responseToBus = null;
-            } else {
-                logger.debug("responded "+response.value.getTypeString());
+        }
+    
+        if (requestFromBus != null) {
+            assert currentTransaction == null;
+            if (waitingForBusReply) {
+                // The bus master can arrange for multiple rounds of
+                // communication if it likes
+                StateAnd<Msg, CacheControllerState<Msg>> response =
+                        state.recieveBusResponse(requestFromBus);
+                assert response != null;
                 responseToBus = response.value;
+                busResponseRead = false;
+                waitingForBusReply = false;
+                state = response.nextState;
+            } else {
+                // TODO - will not work with hierarchial caches,
+                // this assumes that our states can always reply to
+                // a message-requiring-response immediately.
+                StateAnd<Msg, CacheControllerState<Msg>> response =
+                        state.recieveBroadcastMessage(requestFromBus);
+                assert response != null;
+                state = response.nextState;                        
+                responseToBus = response.value;
+                busResponseRead = false;
             }
-            state = response.nextState;
         }
 
         if (recievedMemoryResponse != null) {
-            if (currentTransaction != null) {
-                assert (recievedMemoryResponse == currentTransaction.getMemoryRequest());
-                StateAnd<Msg, CacheControllerState<Msg>> nextRound = state.recieveMemoryResponse(recievedMemoryResponse);
-                currentTransaction = nextRound.value;
-                state = nextRound.nextState;
-            } else {
-                StateAnd<Msg, CacheControllerState<Msg>> x = state.snoopMemoryResponse(recievedMemoryResponse);
-                assert (x != null);
-                assert (x.value == null);
-                state = x.nextState;
-            }
+            assert currentTransaction == null;
+            StateAnd<Msg, CacheControllerState<Msg>> response = state.snoopMemoryResponse(recievedMemoryResponse);
+            assert response != null;
+            assert response.value == null;
+            state = response.nextState;
             recievedMemoryResponse = null;
+        }
+        if (currentTransaction != null
+                && currentTransaction.getAggregator() == null
+                && currentTransaction.getMemoryRequest() == null) {
+            // finished transaction
+            logger.debug("Finished Transaction");
+            currentTransaction = null;
         }
     }
 

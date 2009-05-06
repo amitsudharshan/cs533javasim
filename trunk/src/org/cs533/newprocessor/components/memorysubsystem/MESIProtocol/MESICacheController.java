@@ -22,6 +22,10 @@ public class MESICacheController extends CacheController<MESIBusMessage> {
     static Logger logger = Logger.getLogger(MESICacheController.class);
     int cacheID;
 
+    @Override
+    public String toString() {
+        return "MESICacheController"+Integer.toString(cacheID);
+    }
 
     final LRUEvictHashTable<CacheLine<MESILineState>> data;
 
