@@ -45,8 +45,8 @@ public class MatrixMultiplyTest {
     }
 
     private static void multiplyMatrix(int[] source1, int[] source2, int[] dest) {
-        while (currCol < source2Cols) {
-            while (currRow < source1Rows) {
+        while (true) {
+            while (true) {
                 int destValue = 0;
                 System.out.println("iterating with currRow = " + currRow + " and currCol = " + currCol);
                 int counter = 0;
@@ -58,8 +58,15 @@ public class MatrixMultiplyTest {
                 }
                 dest[(currRow * destCols) + currCol] = destValue;
                 currRow++;
+                if(currRow == source1Rows) {
+                    break;
+                }
             }
+            currRow = 0;
             currCol++;
+            if(currCol==source2Cols) {
+                break;
+            }
         }
 
     }
