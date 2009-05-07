@@ -23,7 +23,7 @@ public class Load extends AbstractMacro {
         return toReturn;
     }
 
-    public String getInstructionThisMacroExtends() {
+    public static String getInstructionThisMacroExtends() {
         return macroExtends;
     }
 }

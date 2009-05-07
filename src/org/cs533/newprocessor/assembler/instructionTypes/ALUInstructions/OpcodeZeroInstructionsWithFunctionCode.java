@@ -12,7 +12,7 @@ import org.cs533.newprocessor.components.core.RegisterFile;
 
 /**
  *This is a representation of a three parameter ALU Instruction
- *This instruction takes the form " add Rd,Rs,Rt " and executes
+ *This instruction takes the form " add Rs,Rt,Rd " and executes
  * Rd = Rs+Rt. This is only for the case of add.
  * We will also do sub, and mul eventually
  * @author amit
@@ -48,6 +48,7 @@ public class OpcodeZeroInstructionsWithFunctionCode extends AbstractInstruction 
 
     public OpcodeZeroInstructionsWithFunctionCode(int instruction) {
         this();
+
         setRegisters(instruction);
 
     }
@@ -62,9 +63,13 @@ public class OpcodeZeroInstructionsWithFunctionCode extends AbstractInstruction 
         aluFunctionCodes = new HashMap<Integer, String>();
         functionCodeForInstruction = new HashMap<String, Integer>();
         aluFunctionCodes.put(0x20, "add");
+        aluFunctionCodes.put(0x22, "sub");
+        aluFunctionCodes.put(0x24, "and");
         aluFunctionCodes.put(0x18, "mul");
         aluFunctionCodes.put(0x08, "jr");
         functionCodeForInstruction.put("add", 0x20);
+        functionCodeForInstruction.put("sub", 0x22);
+        functionCodeForInstruction.put("and", 0x24);
         functionCodeForInstruction.put("mul", 0x18);
         functionCodeForInstruction.put("jr", 0x08);
 
@@ -85,7 +90,6 @@ public class OpcodeZeroInstructionsWithFunctionCode extends AbstractInstruction 
         if (functionCode == 0x08) {
             type = InstructionTypes.branch;
         }
-        System.out.println("got function code = " + functionCode);
     }
 
     @Override
@@ -143,6 +147,14 @@ public class OpcodeZeroInstructionsWithFunctionCode extends AbstractInstruction 
             int op1 = reg.getValueForRegister(registerSource1);
             int op2 = reg.getValueForRegister(registerSource2);
             reg.setValueForRegister(registerDestination, op1 * op2);
+        } else if (aluFunctionCodes.get(functionCode).equals("and")) {
+            int op1 = reg.getValueForRegister(registerSource1);
+            int op2 = reg.getValueForRegister(registerSource2);
+            reg.setValueForRegister(registerDestination, op1 & op2);
+        } else if (aluFunctionCodes.get(functionCode).equals("sub")) {
+            int op1 = reg.getValueForRegister(registerSource1);
+            int op2 = reg.getValueForRegister(registerSource2);
+            reg.setValueForRegister(registerDestination, op1 - op2);
         }
     }
 

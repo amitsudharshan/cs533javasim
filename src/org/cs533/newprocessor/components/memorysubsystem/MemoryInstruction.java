@@ -34,6 +34,14 @@ public class MemoryInstruction implements Cloneable {
     /* output ports */
     byte[] outData;
 
+
+    public SubTypes getSubType() {
+        return subType;
+    }
+
+    public void setSubType(SubTypes subType) {
+        this.subType = subType;
+    }
     public static MemoryInstruction Load(int inAddress) {
         return new MemoryInstruction(inAddress, null, null, InstructionType.Load);
     }

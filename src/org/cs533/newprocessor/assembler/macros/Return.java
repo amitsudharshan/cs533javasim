@@ -20,7 +20,7 @@ public class Return extends AbstractMacro {
         return toReturn;
     }
 
-    public String getInstructionThisMacroExtends() {
+    public static String getInstructionThisMacroExtends() {
         return macroExtends;
     }
 }
