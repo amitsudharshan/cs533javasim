@@ -13,19 +13,20 @@ public class MESINotReadyState extends MESICacheControllerState {
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveBroadcastMessage(MESIBusMessage b) {
-        MESICacheController.logger.debug("recieveBroadcastMessage");
+        logger.debug("recieveBroadcastMessage("+b+")");
         StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> action = handleBroadcastMessage(b);
-        MESICacheController.logger.debug(action.toString());
         return action;
     }
 
     @Override
     public StateAnd<MemoryInstruction, CacheControllerState<MESIBusMessage>> recieveClientRequest(MemoryInstruction request) {
+        logger.debug("recieveClientRequest");
         CacheLine<MESILineState> line = controller.data.get(request.getInAddress());
         if (line == null) {
             line = new CacheLine<MESILineState>(request.getInAddress(), null, MESILineState.INVALID);
             CacheLine<MESILineState> evicted = controller.data.add(line);
-             if (evicted != null) {
+             if (evicted != null && evicted.state == MESILineState.MODIFIED) {
+                logger.debug("line evicted");
                 return jumpTo(new MESIReadyState(MESIBusMessage.Writeback(evicted.address, evicted.data), request, controller));
             }
         }

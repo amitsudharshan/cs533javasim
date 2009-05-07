@@ -25,11 +25,13 @@ public class MESIReadyState extends MESICacheControllerState {
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveBroadcastMessage(MESIBusMessage b) {
+        logger.debug("recieveBroadcastMessage("+b.toString()+")");
         return handleBroadcastMessage(b);
     }
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> startTransaction() {
+        logger.debug("startTransaction");
         return andJump(message, new MESIRunningState(message, pendingRequest, controller));
     }
 }

@@ -6,6 +6,7 @@
 package org.cs533.newprocessor.components.memorysubsystem.MESIProtocol;
 
 import java.util.Arrays;
+import org.apache.log4j.Logger;
 import org.cs533.newprocessor.components.bus.CacheControllerState;
 import org.cs533.newprocessor.components.bus.Either;
 import org.cs533.newprocessor.components.bus.StateAnd;
@@ -18,18 +19,22 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
  */
 public abstract class MESICacheControllerState extends CacheControllerState<MESIBusMessage> {
     protected MESICacheController controller;
+    // track an address we dirtyAcked, so we're not surprised to see it written back
+    protected int dirtyWritebackAddr = -1;
 
     public MESICacheControllerState(MESICacheController controller) {
+        logger = Logger.getLogger(controller.toString()+"."+this.getClass().getSimpleName());
         this.controller = controller;
     }
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> snoopMemoryResponse(MemoryInstruction response) {
+        logger.debug("snoopMemoryResponse");
         return noReply();
     }
 
     protected final StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> handleBroadcastMessage (MESIBusMessage b) {
-        controller.logger.debug("handleBroadcastMessage");
+        logger.debug("handleBroadcastMessage");
         CacheLine<MESILineState> line;
         switch (b.type) {
             case Get:
@@ -46,7 +51,10 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
                             return noJump(MESIBusMessage.AckData(line.data));
                         case MODIFIED:
                             line.state = MESILineState.SHARED;
+                            dirtyWritebackAddr = line.address;
                             return noJump(MESIBusMessage.AckDirty(line.data));
+                        default:
+                            throw new RuntimeException("Unknown line state handling Get "+line.state.toString());
                     }
                 }
             case GetX:
@@ -64,6 +72,8 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
                         case MODIFIED:
                             line.state = MESILineState.INVALID;
                             return noJump(MESIBusMessage.AckDirty(line.data));
+                        default:
+                            throw new RuntimeException("Unknown line state handling GetX "+line.state.toString());
                     }
                 }
             case Invalidate:
@@ -78,26 +88,32 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
                         case INVALID:
                             return noReply();
                         default:
-                            controller.logger.fatal("Got INVALIDATE in state " + line.state.toString());
-                            throw new RuntimeException();
+                            logger.fatal("Got INVALIDATE in state " + line.state.toString());
+                            throw new RuntimeException("Got INVALIDATE in state " + line.state.toString());
                     }
                 }
             case Load:
             case Writeback:
                 // someone else had to go to memory for the line, so we may only have it in INVALID state.
                 line = controller.data.get(b.address);
-                if (line != null && line.state != MESILineState.INVALID) {
-                    controller.logger.fatal("Got "+b.type.toString()+" in state " + line.state.toString());
-                    throw new RuntimeException();
+                if (dirtyWritebackAddr == b.address) {
+                    // unless they were doing a writeback for us
+                    dirtyWritebackAddr = -1;
                 } else {
-                    return noReply();
+                    if (line != null && line.state != MESILineState.INVALID) {
+                        logger.fatal("Got "+b.type.toString()+" in state " + line.state.toString());
+                        throw new RuntimeException("Got "+b.type.toString()+" in state " + line.state.toString());
+                    } else {
+                        return noReply();
+                    }
                 }
             case Nack:
             case AckData:
             case AckDirty:
+            case Done:
                 return noReply();
             default:
-                controller.logger.fatal("Unknown bus message type " + b.type.toString());
+                logger.fatal("Unknown bus message type " + b.type.toString());
                 throw new RuntimeException();
         }
     }
@@ -115,7 +131,7 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
                 case CAS:
                     return Either.Right(MESIBusMessage.GetX(request.getInAddress()));
                 default:
-                    controller.logger.fatal("Unknown memory request type " + request.getClass().toString());
+                    logger.fatal("Unknown memory request type " + request.getClass().toString());
                     throw new RuntimeException();
             }
         } else {
@@ -148,7 +164,7 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
                             return Either.Left(request);
                     }
                 default:
-                    controller.logger.fatal("Unknown memory request type " + request.getClass().toString());
+                    logger.fatal("Unknown memory request type " + request.getClass().toString());
                     throw new RuntimeException();
             }
         }
@@ -156,7 +172,8 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
     protected final StateAnd<MESIBusMessage,CacheControllerState<MESIBusMessage>> handleClientRequestAsMessage(MemoryInstruction request, CacheLine<MESILineState> line) {
         Either<MemoryInstruction,MESIBusMessage> result = handleClientRequest(request, line);
         if (result.isFirst) {
-            return jumpTo(new MESIDoneState(result.first, controller));
+            // nack acts as transaction done, because it has null aggregator and request
+            return andJump(MESIBusMessage.Done(), new MESIDoneState(result.first, controller));
         } else {
             return noJump(result.second);
         }

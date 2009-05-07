@@ -39,6 +39,7 @@ public class MemoryInstruction implements Cloneable {
     }
 
     public static MemoryInstruction Store(int inAddress, byte[] data) {
+        assert inAddress >= 0;
         return new MemoryInstruction(inAddress, null, data, InstructionType.Store);
     }
 

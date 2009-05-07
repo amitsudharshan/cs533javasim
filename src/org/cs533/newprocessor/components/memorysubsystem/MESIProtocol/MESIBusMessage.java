@@ -8,7 +8,7 @@ public class MESIBusMessage extends AbstractBusMessage<MESIBusMessage> {
 
     public static enum MESIBusMessageType {
 
-        Get, GetX, Invalidate, AckData, AckDirty, Nack, Writeback, Load
+        Get, GetX, Invalidate, AckData, AckDirty, Nack, Writeback, Load, Done
     }
     public final MESIBusMessage.MESIBusMessageType type;
     public final int address;
@@ -17,8 +17,12 @@ public class MESIBusMessage extends AbstractBusMessage<MESIBusMessage> {
     private static class AckAggregator implements BusAggregator<MESIBusMessage> {
         MESIBusMessage ack;
         public void aggregate(MESIBusMessage msg) {
+            if (msg.type == MESIBusMessageType.AckDirty) {
+                assert ack == null;
+                ack = msg;
+            }
             if (ack == null) {
-                if (msg.type == MESIBusMessageType.AckData || msg.type == MESIBusMessageType.AckDirty) {
+                if (msg.type == MESIBusMessageType.AckData) {
                     ack = msg;
                 }
             }
@@ -36,6 +40,25 @@ public class MESIBusMessage extends AbstractBusMessage<MESIBusMessage> {
     public String getTypeString() {
         return type.toString();
     }
+    @Override
+    public String toString() {
+        switch (type) {
+            case AckData:
+            case AckDirty:
+            case Nack:
+            case Done:
+                return getTypeString();
+            case Get:
+            case GetX:
+            case Invalidate:
+            case Load:
+            case Writeback:
+                return getTypeString()+"("+Integer.toString(address)+")";
+            default:
+                return "Unknown MESIBusMessage Type "+type.toString();
+        }
+    }
+    
     private MESIBusMessage(MESIBusMessage.MESIBusMessageType type, int address, byte[] data,
             BusAggregator<MESIBusMessage> aggregator, MemoryInstruction memoryRequest) {
         this.type = type;
@@ -67,6 +90,9 @@ public class MESIBusMessage extends AbstractBusMessage<MESIBusMessage> {
 
     public static MESIBusMessage Nack() {
         return new MESIBusMessage(MESIBusMessage.MESIBusMessageType.Nack, -1, null, null, null);
+    }
+    public static MESIBusMessage Done() {
+        return new MESIBusMessage(MESIBusMessage.MESIBusMessageType.Done, -1, null, null, null);
     }
 
     public static MESIBusMessage Writeback(int address, byte[] data) {

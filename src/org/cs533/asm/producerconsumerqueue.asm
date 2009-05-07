@@ -3,8 +3,6 @@
 
 .data
     // this is the lock variable. It is locked with value 1 and unlocked with value 0
-    $firstMatrix[30]
-    $secondMatrix[20]
     $lock 0
     $headOfQueue 0
     $tailOfQueue 0
@@ -74,6 +72,7 @@
 
     #startConsuming
         //get the lock
+        add r0 r0 r11
         jal #lock
         //load pointer to head into r10
         lw r3 r10
@@ -132,4 +131,6 @@
 .startpc
     #producerInitialization
     #consumerInitialization
-    #consumerInitialization   
+    #consumerInitialization
+  #consumerInitialization
+  #consumerInitialization

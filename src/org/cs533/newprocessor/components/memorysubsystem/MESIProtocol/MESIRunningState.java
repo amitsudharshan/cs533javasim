@@ -27,6 +27,7 @@ public class MESIRunningState extends MESICacheControllerState {
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveMemoryResponse(MemoryInstruction response) {
+        logger.debug("recieveMemoryResponse");
         if (response.getType() == InstructionType.Load) {
             // must have been handling a Nack on a cache-to-cache get.
             assert response.getInAddress() == pendingRequest.getInAddress();
@@ -35,18 +36,21 @@ public class MESIRunningState extends MESICacheControllerState {
                 line = new CacheLine<MESILineState>(response, MESILineState.EXCLUSIVE);
                 controller.data.add(line);
             }
+            line.state = MESILineState.EXCLUSIVE;
+            line.data = response.getOutData();
             return handleClientRequestAsMessage(pendingRequest, line);
         } else {
-            // Either we were writing back a dirty-acked line we got from another client,
-            // or evicting a line prior to even beginning our transaction. In both cases
-            // we set up the line state ahead of time, so just do our request.
-            // we set up the desired line state ahead of time, so just try the request.
+            // Either we were writing back a dirty-acked line we got from another client
+            // (AckDirty case in receiveBusResponse), or evicting a line prior to even
+            // beginning our transaction (MESINotReadyState.recieveClientRequest).
+            // In both cases we set up the line state ahead of time, so just do our request.
             return handleClientRequestAsMessage(pendingRequest, controller.data.get(pendingRequest.getInAddress()));
         }
     }
 
     @Override
-    public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveBusResponse(MESIBusMessage b) {
+    public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> receiveBusResponse(MESIBusMessage b) {
+        logger.debug("recieveBusResponse("+b.toString()+")");
         CacheLine<MESILineState> line;
         // must have been a cache to cache round requiring a response: Get or GetX
         switch (b.type) {
@@ -66,7 +70,7 @@ public class MESIRunningState extends MESICacheControllerState {
                         line.state = MESILineState.EXCLUSIVE;
                         break;
                     default:
-                        controller.logger.fatal(("Apparently got ack in response to no-reply request type " + currentRound.type.toString()));
+                        logger.fatal(("Apparently got ack in response to no-reply request type " + currentRound.type.toString()));
                         throw new RuntimeException();
                 }
                 return handleClientRequestAsMessage(pendingRequest, line);
@@ -83,13 +87,13 @@ public class MESIRunningState extends MESICacheControllerState {
                         line.state = MESILineState.EXCLUSIVE;
                         break;
                     default:
-                        controller.logger.fatal(("Apparently got ack in response to no-reply request type " + currentRound.type.toString()));
+                        logger.fatal(("Apparently got ack in response to no-reply request type " + currentRound.type.toString()));
                         throw new RuntimeException();
                 }
-                currentRound = MESIBusMessage.Writeback(b.address, b.data);
+                currentRound = MESIBusMessage.Writeback(pendingRequest.getInAddress(), b.data);
                 return noJump(currentRound);
             default:
-                controller.logger.fatal("Unexpected bus response type " + b.type.toString());
+                logger.fatal("Unexpected bus response type " + b.type.toString());
                 throw new RuntimeException();
         }
     }

@@ -69,6 +69,7 @@ public class MainMemory implements ComponentInterface, MemoryInterface {
         if (toDo.getType() == InstructionType.Store) {
             int counter = 0;
             for (int i = byteAddress; i < toDo.getInData().length + byteAddress; i++) {
+                logger.debug(toDo);
                 memory[i] = toDo.getInData()[counter++];
             }
         } else if (toDo.getType() == InstructionType.Load) {

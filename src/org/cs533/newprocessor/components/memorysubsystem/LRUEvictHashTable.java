@@ -40,10 +40,10 @@ public class LRUEvictHashTable<T extends CacheLine> {
 
     public T add(T newLine) {
         lines.put(newLine.address, newLine);
-        if (lines.size() == size) {
+        if (lines.size() == size+1) {
             Iterator<Entry<Integer,T>> iter = lines.entrySet().iterator();
             Entry<Integer,T> removed = iter.next();
-            lines.remove(removed.getKey());
+            iter.remove();
             return removed.getValue();
         } else {
             return null;
