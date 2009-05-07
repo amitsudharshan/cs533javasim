@@ -35,6 +35,7 @@ public class Simulator {
     public static Thread simulatorThread;
     public static boolean isRunning = false;
     static Object tickLock = new Object();
+    static boolean LAUNCH_GUI = false;
 
     private Simulator() {
     }
@@ -87,9 +88,10 @@ public class Simulator {
             //       MemoryInterface l1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
             //     bus.registerClient((L1Cache) l1);
             pCore[i] = new ProcessorCore(pcStart[i], m, i);
-
-            MainSimulatorFrame r = MainSimulatorFrame.getFrameAndShow(pCore[i]);
-            r.spawnUpdatingThread();
+            if (LAUNCH_GUI) {
+                MainSimulatorFrame r = MainSimulatorFrame.getFrameAndShow(pCore[i]);
+                r.spawnUpdatingThread();
+            }
         }
         runSimulation();
         int doneProcessor = 0;

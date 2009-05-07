@@ -18,7 +18,9 @@ import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.Bran
 import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.BranchIfGreaterThanOrEqualToZero;
 import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.BranchIfLessThanOrEqualToZero;
 import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.JumpAndLinkInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.InvalidateCompareAndSwapInstruction;
 import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.InvalidateStoreWordInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.UpdateCompareAndSwapInstruction;
 import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.UpdateStoreWordInstruction;
 
 /**
@@ -38,7 +40,9 @@ public class OpcodeMetaData {
         opCodeToAssemblerMap.put("lui", new LoadUpperImmediateInstruction());
         opCodeToAssemblerMap.put("sw", new StoreWordInstruction());
         opCodeToAssemblerMap.put("upsw", new UpdateStoreWordInstruction());
+        opCodeToAssemblerMap.put("upcas", new UpdateCompareAndSwapInstruction());
         opCodeToAssemblerMap.put("ivsw", new InvalidateStoreWordInstruction());
+        opCodeToAssemblerMap.put("ivcas", new InvalidateCompareAndSwapInstruction());
         opCodeToAssemblerMap.put("lw", new LoadWordInstruction());
         opCodeToAssemblerMap.put("cas", new CompareAndSwapInstruction());
         opCodeToAssemblerMap.put("beq", new BranchIfEqualInstruction());
