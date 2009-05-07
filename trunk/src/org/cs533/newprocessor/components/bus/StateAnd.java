@@ -1,9 +1,13 @@
 package org.cs533.newprocessor.components.bus;
 
-public class StateAnd<V,S> {
+public class StateAnd<V, S> {
 
     public final V value;
     public final S nextState;
+
+    public String toString() {
+        return "StateAnd(" + (value == null ? "null" : value.toString()) + "," + nextState.toString() + ")";
+    }
 
     StateAnd(V value, S next) {
         super();

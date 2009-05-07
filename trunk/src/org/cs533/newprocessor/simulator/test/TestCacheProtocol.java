@@ -9,10 +9,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;
 import org.cs533.newprocessor.components.bus.CacheCoherenceBus;
-import org.cs533.newprocessor.components.memorysubsystem.L1Cache;
-import org.cs533.newprocessor.components.memorysubsystem.MESIProtocol.MESIBusMessage;
-import org.cs533.newprocessor.components.memorysubsystem.MESIProtocol.MESICacheController;
-import org.cs533.newprocessor.components.memorysubsystem.MIProtocol;
+import org.cs533.newprocessor.components.memorysubsystem.FireflyProtocol.FireflyBusMessage;
+import org.cs533.newprocessor.components.memorysubsystem.FireflyProtocol.FireflyCacheController;
 import org.cs533.newprocessor.components.memorysubsystem.MainMemory;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
@@ -35,38 +33,45 @@ public class TestCacheProtocol {
         try {
             //instantiate and register all clients
             MemoryInterface m = new MainMemory();
-            CacheCoherenceBus<MESIBusMessage> bus = new CacheCoherenceBus<MESIBusMessage>(m);
-            // MemoryInterface firstL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
-            // MemoryInterface secondL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
-            MESICacheController firstL1 = new MESICacheController(1);
-            MESICacheController secondL1 = new MESICacheController(2);
-
+            // CacheCoherenceBus<MIBusMessage> bus = new CacheCoherenceBus<MIBusMessage>(m);
+            CacheCoherenceBus<FireflyBusMessage> bus = new CacheCoherenceBus<FireflyBusMessage>(m);
+            //L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>
+            //        firstL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
+            //L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>
+            //        secondL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
+            FireflyCacheController firstL1 = new FireflyCacheController(1);
+            FireflyCacheController secondL1 = new FireflyCacheController(2);
 
             bus.registerClient(firstL1);
             bus.registerClient(secondL1);
 
+            //queue the memory instructions
+            MemoryInstruction storeFirst = MemoryInstruction.Store(0, AbstractInstruction.intToByteArray(FIRST_STORE_VALUE));
+            firstL1.enqueueMemoryInstruction(storeFirst);
+            MemoryInstruction storeSecond = MemoryInstruction.Store(1, AbstractInstruction.intToByteArray(SECOND_STORE_VALUE));
+            firstL1.enqueueMemoryInstruction(storeSecond);
+            MemoryInstruction loadFirst = MemoryInstruction.Load(0);
+            firstL1.enqueueMemoryInstruction(loadFirst);
+            MemoryInstruction loadSecond = MemoryInstruction.Load(1);
+            firstL1.enqueueMemoryInstruction(loadSecond);
+
             //start the simulation
             Simulator.runSimulation();
 
-            //execute the memory instructions
-            MemoryInstruction storeFirst = MemoryInstruction.Store(0, AbstractInstruction.intToByteArray(FIRST_STORE_VALUE));
-            firstL1.enqueueMemoryInstruction(storeFirst);
-            MemoryInstruction loadFirst = MemoryInstruction.Load(0);
-            firstL1.enqueueMemoryInstruction(loadFirst);
-            MemoryInstruction loadSecond = MemoryInstruction.Load(0);
-            firstL1.enqueueMemoryInstruction(loadSecond);
-
-
             // wait till they are finished
-            while (!storeFirst.getIsCompleted() || !loadFirst.getIsCompleted() || !loadSecond.getIsCompleted()) {
+            while (!storeFirst.getIsCompleted() || !loadFirst.getIsCompleted() || !loadFirst.getIsCompleted() || !loadSecond.getIsCompleted()) {
                 Thread.sleep(10);
             }
 
             Simulator.stopSimulation();
-//verify result:
+            //verify result:
             boolean isSuccess = true;
-            System.out.println("for memory address 0x" + Integer.toHexString(storeFirst.getInAddress()) + " we stored " + FIRST_STORE_VALUE);
+            System.out.println("for memory address 0x0 we should have stored "+Integer.toString(FIRST_STORE_VALUE));
+            System.out.println("for memory address 0x" + Integer.toHexString(storeFirst.getInAddress()) + " we stored " + AbstractInstruction.byteArrayToInt(storeFirst.getInData()));
             System.out.println("for memory address 0x" + Integer.toHexString(loadFirst.getInAddress()) + " we returned " + AbstractInstruction.byteArrayToInt(loadFirst.getOutData()));
+            System.out.println("for memory address 0x1 we should have stored "+Integer.toString(SECOND_STORE_VALUE));
+            System.out.println("for memory address 0x" + Integer.toHexString(storeSecond.getInAddress()) + " we stored " + AbstractInstruction.byteArrayToInt(storeSecond.getInData()));
+            System.out.println("for memory address 0x" + Integer.toHexString(loadSecond.getInAddress()) + " we returned " + AbstractInstruction.byteArrayToInt(loadSecond.getOutData()));
 
             Simulator.printStatistics();
         } catch (Exception ex) {

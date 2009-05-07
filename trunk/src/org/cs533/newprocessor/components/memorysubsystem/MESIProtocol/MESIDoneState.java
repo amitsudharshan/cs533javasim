@@ -22,7 +22,15 @@ public class MESIDoneState extends MESICacheControllerState {
     }
 
     @Override
+    public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveBroadcastMessage(MESIBusMessage b) {
+        logger.debug("recieveBroadcastMessage("+b+")");
+        StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> action = handleBroadcastMessage(b);
+        return action;
+    }
+
+    @Override
     public StateAnd<MemoryInstruction, CacheControllerState<MESIBusMessage>> pollRequestStatus(MemoryInstruction request) {
+        logger.debug("pollRequestStatus");
         return andJump(response, new MESINotReadyState(controller));
     }
 }

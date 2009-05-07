@@ -5,13 +5,9 @@
 package org.cs533.newprocessor.components.memorysubsystem.MESIProtocol;
 
 import org.cs533.newprocessor.components.memorysubsystem.*;
-import java.util.Arrays;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.cs533.newprocessor.Globals;
-import org.cs533.newprocessor.components.bus.AbstractBusMessage;
-import org.cs533.newprocessor.components.bus.CacheControllerState;
-import org.cs533.newprocessor.components.bus.StateAnd;
-import org.cs533.newprocessor.components.memorysubsystem.MESIProtocol.MESIBusMessage;
 
 /**
  *
@@ -19,20 +15,19 @@ import org.cs533.newprocessor.components.memorysubsystem.MESIProtocol.MESIBusMes
  */
 public class MESICacheController extends CacheController<MESIBusMessage> {
 
-    static Logger logger = Logger.getLogger(MESICacheController.class);
     int cacheID;
 
     @Override
     public String toString() {
-        return "MESICacheController"+Integer.toString(cacheID);
+        return "MESICacheController-"+Integer.toString(cacheID);
     }
 
     final LRUEvictHashTable<CacheLine<MESILineState>> data;
 
     public MESICacheController(int cacheID_) {
-        super();
+        super(Logger.getLogger("MESICacheController-"+Integer.toString(cacheID_)));
         cacheID = cacheID_;
+        setState(new MESINotReadyState(this));
         data = new LRUEvictHashTable<CacheLine<MESILineState>>(Globals.L1_SIZE_IN_NUMBER_OF_LINES);
-        state = new MESINotReadyState(this);
     }
 }

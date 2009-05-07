@@ -31,7 +31,6 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
     ArrayList<BusClient<BusMessage>> responsesOutstanding;
     MemoryInstruction upstreamRequest;
     int nextClient = 0;
-    BusMessage msg = null;
     int runCycles = 0;
 
     public CacheCoherenceBus(MemoryInterface upstream) {
@@ -50,6 +49,7 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
     public void runPrep() {
         // for every cache pull the outbound messages from the queue and prepare
         // to broadcast them
+        BusMessage msg;
         ++runCycles;
         switch (phase) {
             case GetMsg:
@@ -58,7 +58,7 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
                 do {
                     msg = clients.get(j).getBusMessage();
                     if (msg != null) {
-                        //Simulator.logEvent("GetMsg - client "+j+" has message");
+                        // Simulator.logEvent("GetMsg - client "+j+" has message");
                         break;
                     }
                     //Simulator.logEvent("GetMsg - client "+j+" not ready");
@@ -76,7 +76,7 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
                             client.recieveMessage(msg);
                         }
                     }
-                    finishedRound();
+                    pickNextRound();
                 }
                 break;
             case GetResponses:
@@ -124,6 +124,17 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
     }
 
     private void finishedRound() {
+        BusMessage m = currentMaster.getBusMessage();
+        if (m != null) {
+            for (BusClient<BusMessage> client : clients) {
+               if (client != currentMaster) {
+                   client.recieveMessage(m);
+                }
+            }
+        }
+        pickNextRound();
+    }
+    private void pickNextRound() {
         aggregator = currentMaster.getAggregator();
         if (aggregator != null) {
             responsesOutstanding = new ArrayList<BusClient<BusMessage>>(clients);
@@ -137,7 +148,7 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
         if (upstreamRequest != null) {
             upstream.enqueueMemoryInstruction(upstreamRequest);
             phase = Phase.GetMemoryResponse;
-            Simulator.logEvent("finishedRound -> GetMemoryResponses");
+            Simulator.logEvent("finishedRound -> GetMemoryResponse");
             return;
         }
         Simulator.logEvent("finishedRound -> Delay");
