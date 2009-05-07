@@ -19,8 +19,13 @@ public class MemoryInstruction implements Cloneable {
 
         Load, Store, CAS
     }
+
+    public enum SubTypes {
+
+        None, UpdateStore, InvalidateStore
+    }
     InstructionType type;
-    int type_flags;
+    SubTypes subType;
     int inAddress;
     byte[] inData;
     byte[] compareData;
@@ -75,7 +80,7 @@ public class MemoryInstruction implements Cloneable {
 
     protected MemoryInstruction(int inAddress, byte[] compareData, byte[] data, InstructionType type) {
         this.type = type;
-        this.type_flags = 0;
+        this.subType = SubTypes.None;
         this.inAddress = inAddress;
         this.inData = data;
         this.compareData = compareData;
@@ -120,8 +125,8 @@ public class MemoryInstruction implements Cloneable {
         return type;
     }
 
-    public int getTypeFlags() {
-        return type_flags;
+    public SubTypes getTypeFlags() {
+        return subType;
     }
 
     @Override
