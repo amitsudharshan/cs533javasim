@@ -28,38 +28,37 @@ public class ProcessorCore implements ComponentInterface {
         return LATENCY;
     }
 
-
-    enum ProcessingStates {
+    public enum ProcessingStates {
 
         fetch, decode, alu, memory, writeback, halt
     }
+
+    public int tickCount = 0;
     public static final int LATENCY = 1;
     MemoryInterface mainMemory;
-    RegisterFile rFile = new RegisterFile();
-    ProcessingStates currentState = ProcessingStates.fetch;
+    public RegisterFile rFile = new RegisterFile();
+    public ProcessingStates currentState = ProcessingStates.fetch;
     /** This variable indicates a coreID for the chip during simulation */
-    int coreNumber = -1;
+    public int coreNumber = -1;
 
     /* State for fetch stage */
-    MemoryInstruction fetchInstruction = null;
-    boolean fetchInstructionCompleted = false;
+    public MemoryInstruction fetchInstruction = null;
+    public boolean fetchInstructionCompleted = false;
 
     /* State for decode stage */
-    int instruction = -1;
-
+    public int instruction = -1;
     /* State for the execute stage */
-    AbstractInstruction abstrInstr = null;
+    public AbstractInstruction abstrInstr = null;
 
     /* State for memory stage */
-    MemoryInstruction memoryInstruction = null;
-    boolean memoryInstructionCompleted = false;
+    public MemoryInstruction memoryInstruction = null;
+    public boolean memoryInstructionCompleted = false;
 
     /* State for writeback stage */
-    byte[] toWriteBack;
+    public byte[] toWriteBack;
 
     /* State if in Halt state */
-    boolean isHalted = false;
-
+    public boolean isHalted = false;
 
     public ProcessorCore(int _startPC, MemoryInterface memory, int coreNumber_) {
         rFile.setPC(_startPC);
@@ -82,6 +81,7 @@ public class ProcessorCore implements ComponentInterface {
     }
 
     public void runClock() {
+        tickCount++;
         switch (currentState) {
             case fetch:
                 if (fetchInstruction == null) {
@@ -89,7 +89,7 @@ public class ProcessorCore implements ComponentInterface {
                     mainMemory.enqueueMemoryInstruction(fetchInstruction);
                 } else if (fetchInstructionCompleted) {
                     instruction = AbstractInstruction.byteArrayToInt(fetchInstruction.getOutData());
-                    logger.debug("GOT INSTRUCTION \n" + AbstractInstruction.zeroPadIntForString(instruction, 32) + "\n\n\n");
+                    //     logger.debug("GOT INSTRUCTION \n" + AbstractInstruction.zeroPadIntForString(instruction, 32) + "\n\n\n");
                     fetchInstruction = null;
                     currentState = ProcessingStates.decode;
                 }
@@ -137,9 +137,11 @@ public class ProcessorCore implements ComponentInterface {
                 } else {
                     rFile.incrementPC(Globals.WORD_SIZE);
                 }
-                logger.debug("We have just finished executing:  in coreNumber #" + coreNumber + " with PC value 0x" + Integer.toHexString(rFile.getPC()) + " \n " + abstrInstr.toString());
-                logger.debug(rFile);
-                logger.debug("--------------------");
+                StringBuffer toAppend = new StringBuffer();
+                toAppend.append("We have just finished executing:  in coreNumber #" + coreNumber + " with PC value 0x" + Integer.toHexString(rFile.getPC()) + " \n " + abstrInstr.toString() + "\n");
+                toAppend.append(rFile.toString() + "\n");
+                toAppend.append("--------------------\n");
+                logger.debug(toAppend);
                 currentState = ProcessingStates.fetch;
                 break;
             case halt:

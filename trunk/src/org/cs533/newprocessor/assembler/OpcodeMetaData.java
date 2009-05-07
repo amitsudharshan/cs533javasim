@@ -15,8 +15,11 @@ import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.Load
 import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.StoreWordInstruction;
 import org.cs533.newprocessor.assembler.instructionTypes.ALUInstructions.OpcodeZeroInstructionsWithFunctionCode;
 import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.BranchIfEqualInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.BranchIfGreaterThanOrEqualToZero;
 import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.BranchIfLessThanOrEqualToZero;
 import org.cs533.newprocessor.assembler.instructionTypes.BranchInstructions.JumpAndLinkInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.InvalidateStoreWordInstruction;
+import org.cs533.newprocessor.assembler.instructionTypes.MemoryInstructions.UpdateStoreWordInstruction;
 
 /**
  *
@@ -27,14 +30,20 @@ public class OpcodeMetaData {
     public static HashMap<String, AbstractInstruction> populateOpCodeAssemblerMap() {
         HashMap<String, AbstractInstruction> opCodeToAssemblerMap = new HashMap<String, AbstractInstruction>();
         opCodeToAssemblerMap.put("add", new OpcodeZeroInstructionsWithFunctionCode());
+        opCodeToAssemblerMap.put("sub", new OpcodeZeroInstructionsWithFunctionCode());
+        opCodeToAssemblerMap.put("and", new OpcodeZeroInstructionsWithFunctionCode());
+        opCodeToAssemblerMap.put("mul", new OpcodeZeroInstructionsWithFunctionCode());
         opCodeToAssemblerMap.put("addi", new AddImmediateInstruction());
         opCodeToAssemblerMap.put("ori", new OrImmediateInstruction());
         opCodeToAssemblerMap.put("lui", new LoadUpperImmediateInstruction());
         opCodeToAssemblerMap.put("sw", new StoreWordInstruction());
+        opCodeToAssemblerMap.put("upsw", new UpdateStoreWordInstruction());
+        opCodeToAssemblerMap.put("ivsw", new InvalidateStoreWordInstruction());
         opCodeToAssemblerMap.put("lw", new LoadWordInstruction());
         opCodeToAssemblerMap.put("cas", new CompareAndSwapInstruction());
         opCodeToAssemblerMap.put("beq", new BranchIfEqualInstruction());
         opCodeToAssemblerMap.put("blez", new BranchIfLessThanOrEqualToZero());
+        opCodeToAssemblerMap.put("bgez", new BranchIfGreaterThanOrEqualToZero());
         opCodeToAssemblerMap.put("jal", new JumpAndLinkInstruction());
         opCodeToAssemblerMap.put("jr", new OpcodeZeroInstructionsWithFunctionCode());
         opCodeToAssemblerMap.put("halt", new HaltInstruction());

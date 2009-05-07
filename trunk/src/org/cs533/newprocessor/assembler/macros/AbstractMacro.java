@@ -5,7 +5,6 @@
 package org.cs533.newprocessor.assembler.macros;
 
 import java.util.HashMap;
-import org.cs533.newprocessor.assembler.macros.LoadValue;
 
 /**
  *
@@ -37,18 +36,9 @@ public abstract class AbstractMacro {
 
     public abstract String[] runMacro(String instruction);
 
-    public abstract String getInstructionThisMacroExtends();
-
-    public static void addToMap(AbstractMacro macro) {
-        instructionToMacro.put(macro.getInstructionThisMacroExtends(), macro);
-    }
-
     public static void createMacroMap() {
-        Load load = new Load();
-        LoadValue loadV = new LoadValue();
-        Return ret = new Return();
-        instructionToMacro.put(load.getInstructionThisMacroExtends(), load);
-        instructionToMacro.put(loadV.getInstructionThisMacroExtends(), loadV);
-        instructionToMacro.put(ret.getInstructionThisMacroExtends(), ret);
+        instructionToMacro.put(Load.getInstructionThisMacroExtends(), new Load());
+        instructionToMacro.put(LoadValue.getInstructionThisMacroExtends(), new LoadValue());
+        instructionToMacro.put(Return.getInstructionThisMacroExtends(), new Return());
     }
 }

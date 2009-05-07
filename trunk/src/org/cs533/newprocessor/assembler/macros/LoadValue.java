@@ -27,7 +27,7 @@ public class LoadValue extends AbstractMacro {
         return toReturn;
     }
 
-    public String getInstructionThisMacroExtends() {
+    public static String getInstructionThisMacroExtends() {
         return macroExtends;
     }
 }

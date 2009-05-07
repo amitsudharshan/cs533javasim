@@ -67,8 +67,8 @@ public class Assembler {
     }
 
     public static void main(String[] args) throws Exception {
-        String inputFile = "/home/amit/NetBeansProjects/newcs533javasim/src/org/cs533/asm/matrixmultiply.c";
-        String outputFile = "/home/amit/asm/a.out";
+        String inputFile = "C:\\Users\\Vivek\\Desktop\\dev\\HybridCoherence2\\cs533javasim\\src\\org\\cs533\\asm\\pmatrixmultiply.asm";
+        String outputFile = "C:\\Users\\Vivek\\Desktop\\dev\\HybridCoherence2\\cs533javasim\\src\\org\\cs533\\asm\\a.out";
         if (args.length >= 2) {
             inputFile = args[0];
             outputFile = args[1];
@@ -141,14 +141,18 @@ public class Assembler {
                         int rIndex = split[0].indexOf("]");
                         nextOffset = Integer.parseInt(split[0].substring(brakIndex + 1, rIndex));
                         System.out.println("got a nextOffset with value " + nextOffset + " for variable: " + split[0]);
-                        split[0] = split[0].substring(0,brakIndex);
+                        split[0] = split[0].substring(0, brakIndex);
+                        for (int i = 0; i < nextOffset; i++) {
+                            memoryImage.add(toAdd);
+                        }
                     } else {
                         long value = Long.decode(split[1]);
                         toAdd = (int) (value & 0xFFFFFFFF);
+                        memoryImage.add(toAdd);
                     }
                     variableToAddressMap.put(split[0], nextAddress);
-                    memoryImage.add(toAdd);
-                    nextAddress = (nextAddress + nextOffset) + (Globals.WORD_SIZE * 1);
+
+                    nextAddress = (nextAddress) + Math.max((nextOffset * Globals.WORD_SIZE), Globals.WORD_SIZE);
 
                 } else {
                     throw new java.lang.RuntimeException("in data state found non matching instruction for line \n " + line);

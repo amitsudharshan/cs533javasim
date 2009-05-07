@@ -42,7 +42,7 @@ public class BranchIfLessThanOrEqualToZero extends AbstractBranchInstruction {
     }
 
     public static void main(String[] args) {
-        String instruction = "bleq r3 r4 0xF234";
+        String instruction = "blez r3 r4 0xF234";
         BranchIfEqualInstruction b = new BranchIfEqualInstruction();
         int instr = b.assembleInstruction(instruction);
         System.out.println(b.getAbstractInstruction(instr).toString());
