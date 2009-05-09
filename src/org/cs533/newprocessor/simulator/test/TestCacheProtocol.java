@@ -8,7 +8,9 @@ import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.cs533.newprocessor.assembler.abstractandinterface.AbstractInstruction;
+import org.cs533.newprocessor.components.bus.AbstractBusMessage;
 import org.cs533.newprocessor.components.bus.CacheCoherenceBus;
+import org.cs533.newprocessor.components.memorysubsystem.CacheController;
 import org.cs533.newprocessor.components.memorysubsystem.FireflyProtocol.FireflyBusMessage;
 import org.cs533.newprocessor.components.memorysubsystem.FireflyProtocol.FireflyCacheController;
 import org.cs533.newprocessor.components.memorysubsystem.MainMemory;
@@ -27,20 +29,25 @@ public class TestCacheProtocol {
     static Logger logger = Logger.getLogger(TestCacheProtocol.class.getName());
 
     public static void main(String[] args) {
-
+        doTest(FireflyBusMessage.class, FireflyCacheController.class);
+    }
+    
+    public static <Msg extends AbstractBusMessage<Msg>,
+                    Cache extends CacheController<Msg>>
+                    void doTest(Class<Msg> _, Class<Cache> cls) {
         Logger.getRootLogger().setLevel(Level.ALL);;
         BasicConfigurator.configure();
         try {
             //instantiate and register all clients
             MemoryInterface m = new MainMemory();
             // CacheCoherenceBus<MIBusMessage> bus = new CacheCoherenceBus<MIBusMessage>(m);
-            CacheCoherenceBus<FireflyBusMessage> bus = new CacheCoherenceBus<FireflyBusMessage>(m);
+            CacheCoherenceBus<Msg> bus = new CacheCoherenceBus<Msg>(m);
             //L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>
             //        firstL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
             //L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>
             //        secondL1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
-            FireflyCacheController firstL1 = new FireflyCacheController(1);
-            FireflyCacheController secondL1 = new FireflyCacheController(2);
+            Cache firstL1 = cls.getConstructor(int.class).newInstance(1);
+            Cache secondL1 = cls.getConstructor(int.class).newInstance(2);
 
             bus.registerClient(firstL1);
             bus.registerClient(secondL1);
