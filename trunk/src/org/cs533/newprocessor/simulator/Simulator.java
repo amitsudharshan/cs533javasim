@@ -4,6 +4,7 @@
  */
 package org.cs533.newprocessor.simulator;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.BrokenBarrierException;
@@ -74,7 +75,9 @@ public class Simulator {
         Logger.getRootLogger().setLevel(Level.INFO);
         Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
         BasicConfigurator.configure();
-        String asmFileName = "C:\\Users\\Vivek\\Desktop\\dev\\HybridCoherence2\\cs533javasim\\src\\org\\cs533\\asm\\producerconsumerqueue.asm";
+        String asmFileName = new File(new File(System.getProperty("user.dir")).toURI()
+                .resolve("src/org/cs533/asm/producerconsumerqueue.asm")).toString();
+        System.out.println(asmFileName);
         if (args.length > 0) {
             asmFileName = args[0];
         }
