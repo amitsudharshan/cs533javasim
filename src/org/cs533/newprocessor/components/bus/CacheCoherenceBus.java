@@ -19,6 +19,11 @@ import org.cs533.newprocessor.simulator.Simulator;
  */
 public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
 
+    @Override
+    public String toString() {
+        return "CacheCoherenceBus";
+    }
+
     enum Phase {
 
         GetMsg, BroadcastMsg, GetResponses, GetMemoryResponse, BroadcastResponse, Delay

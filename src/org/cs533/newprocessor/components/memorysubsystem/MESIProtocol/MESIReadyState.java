@@ -17,21 +17,26 @@ public class MESIReadyState extends MESICacheControllerState {
     final MESIBusMessage message;
     final MemoryInstruction pendingRequest;
 
+    @Override
+    public String toString() {
+        return "MESIReadyState("+message.toString()+","+pendingRequest.toString()+")";
+    }
+
     MESIReadyState(MESIBusMessage message, MemoryInstruction pendingRequest, MESICacheController controller) {
         super(controller);
+        assert message != null;
+        assert pendingRequest != null;
         this.message = message;
         this.pendingRequest = pendingRequest;
     }
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveBroadcastMessage(MESIBusMessage b) {
-        logger.debug("recieveBroadcastMessage("+b.toString()+")");
         return handleBroadcastMessage(b);
     }
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> startTransaction() {
-        logger.debug("startTransaction");
         return andJump(message, new MESIRunningState(message, pendingRequest, controller));
     }
 }

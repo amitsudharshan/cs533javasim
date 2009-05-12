@@ -7,20 +7,24 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
 
 public class MESINotReadyState extends MESICacheControllerState {
 
+    @Override
+    public String toString() {
+        return "MESINotReadyState";
+    }
+
+
     public MESINotReadyState(MESICacheController controller) {
         super(controller);
     }
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveBroadcastMessage(MESIBusMessage b) {
-        logger.debug("recieveBroadcastMessage("+b+")");
         StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> action = handleBroadcastMessage(b);
         return action;
     }
 
     @Override
     public StateAnd<MemoryInstruction, CacheControllerState<MESIBusMessage>> recieveClientRequest(MemoryInstruction request) {
-        logger.debug("recieveClientRequest");
         CacheLine<MESILineState> line = controller.data.get(request.getInAddress());
         if (line == null) {
             line = new CacheLine<MESILineState>(request.getInAddress(), null, MESILineState.INVALID);

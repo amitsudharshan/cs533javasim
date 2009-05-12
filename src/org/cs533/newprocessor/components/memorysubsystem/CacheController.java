@@ -30,7 +30,7 @@ public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
     protected MemoryInstruction recievedMemoryResponse;
     private boolean waitingForBusReply = false;
 
-    protected void setState(CacheControllerState<Msg> state) {
+    public void setState(CacheControllerState<Msg> state) {
         this.state = state;
         logger.debug("state -> "+state.toString());
     }
@@ -56,17 +56,17 @@ public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
             setState(response.nextState);
         } else {
             if (waitingForBusReply) {
+                    waitingForBusReply = false;
                 // The bus master can arrange for multiple rounds of
                 // communication if it likes
                 StateAnd<Msg, CacheControllerState<Msg>> response =
                         state.receiveBusResponse(msg);
-                if (response == null) {
-                    assert response != null;
+                if (response != null) {
+                    logger.debug("recieveBusResponse => "+response.toString());
+                    setState(response.nextState);
+                } else {
+                    logger.debug("recieveBusResponse => null");
                 }
-                logger.debug("recieveBusResponse => "+response.toString());
-                responseToBus = response.value;
-                waitingForBusReply = false;
-                setState(response.nextState);
             } else {
                 // TODO - will not work with hierarchial caches,
                 // this assumes that our states can always reply to
@@ -84,11 +84,11 @@ public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
     // probably the bus will only ask us once after
     // each thing that demands a response
     public Msg getResponse() {
-        logger.debug("getResponse => "+responseToBus.toString());
         // state was responsible for setting a reply
         // right away in runClock if one was needed,
         // so we must have a message
         assert responseToBus != null;
+        logger.debug("getResponse => "+responseToBus.toString());
         // bus will not call getResponse again after
         // getting a response without sending us another
         // message in between, so null out the field.

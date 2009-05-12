@@ -29,12 +29,10 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> snoopMemoryResponse(MemoryInstruction response) {
-        logger.debug("snoopMemoryResponse");
         return noReply();
     }
 
     protected final StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> handleBroadcastMessage (MESIBusMessage b) {
-        logger.debug("handleBroadcastMessage");
         CacheLine<MESILineState> line;
         switch (b.type) {
             case Get:

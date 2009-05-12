@@ -16,6 +16,11 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
 public class MESIDoneState extends MESICacheControllerState {
     MemoryInstruction response;
 
+    @Override
+    public String toString() {
+        return "MESIDoneState("+response.toString()+")";
+    }
+
     public MESIDoneState(MemoryInstruction response, MESICacheController controller) {
         super(controller);
         this.response = response;
@@ -23,14 +28,12 @@ public class MESIDoneState extends MESICacheControllerState {
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveBroadcastMessage(MESIBusMessage b) {
-        logger.debug("recieveBroadcastMessage("+b+")");
         StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> action = handleBroadcastMessage(b);
         return action;
     }
 
     @Override
     public StateAnd<MemoryInstruction, CacheControllerState<MESIBusMessage>> pollRequestStatus(MemoryInstruction request) {
-        logger.debug("pollRequestStatus");
         return andJump(response, new MESINotReadyState(controller));
     }
 }

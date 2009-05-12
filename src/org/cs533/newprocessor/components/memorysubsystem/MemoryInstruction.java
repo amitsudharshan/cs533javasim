@@ -57,6 +57,24 @@ public class MemoryInstruction implements Cloneable {
 
     @Override
     public String toString() {
+        switch (type) {
+            case CAS:
+                return "CAS(0x"+Integer.toHexString(inAddress)
+                        +",0x"+Integer.toHexString(AbstractInstruction.byteArrayToInt(compareData))
+                        +"->0x"+Integer.toHexString(AbstractInstruction.byteArrayToInt(inData))
+                        +")"+(this.isCompleted ? "=>0x"+Integer.toHexString(AbstractInstruction.byteArrayToInt(outData)) : "");
+            case Load:
+                return "Load(0x"+Integer.toHexString(inAddress)
+                        +")"+(this.isCompleted ? "=>0x"+Integer.toHexString(AbstractInstruction.byteArrayToInt(outData)) : "");
+            case Store:
+                return "Store(0x"+Integer.toHexString(inAddress)
+                        +"->0x"+Integer.toHexString(AbstractInstruction.byteArrayToInt(inData))
+                        +")"+(this.isCompleted ? "--done" : "");
+            default:
+                throw new RuntimeException("Unknown MemoryInstruction type "+type.toString());
+        }
+    }
+    public String oldToString() {
         StringBuffer toReturn = new StringBuffer();
         int dataIn = -1;
         int dataOut = -1;
