@@ -9,7 +9,7 @@ public class StateAnd<V, S> {
         return "StateAnd(" + (value == null ? "null" : value.toString()) + "," + nextState.toString() + ")";
     }
 
-    StateAnd(V value, S next) {
+    public StateAnd(V value, S next) {
         super();
         this.value = value;
         this.nextState = next;

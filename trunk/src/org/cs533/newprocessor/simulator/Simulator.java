@@ -38,6 +38,20 @@ public class Simulator {
     static Object tickLock = new Object();
     static boolean LAUNCH_GUI = false;
 
+    public static String getPhase() {
+        if (!isRunning) {
+            return "Not Started";
+        }
+        if (inPrep) {
+            return "Prep"+Integer.toString(prepCount);
+        } else {
+            return "Clock"+Integer.toString(clockCount);
+        }
+    }
+    static boolean inPrep = true;
+    static int prepCount = 0;
+    static int clockCount = -1;
+
     private Simulator() {
     }
 
@@ -184,6 +198,7 @@ public class Simulator {
                     });
                     workers[i].start();
                 }
+                prepCount++;
                 for (int i = 0; i < workers.length; i++) {
                     try {
                         workers[i].join();
@@ -191,6 +206,7 @@ public class Simulator {
                         java.util.logging.Logger.getLogger(Simulator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
                     }
                 }
+                clockCount++;
                 final AtomicInteger newCounter = new AtomicInteger(0);
                 for (int i = 0; i < workers.length; i++) {
                     workers[i] = new Thread(new Runnable() {
@@ -219,8 +235,20 @@ public class Simulator {
     public static void runSimulation() {
         isRunning = true;
         final Thread[] workers = new Thread[components.size()];
-        final CyclicBarrier prepStart = new CyclicBarrier(components.size() + 1);
-        final CyclicBarrier clockStart = new CyclicBarrier(components.size() + 1);
+        final CyclicBarrier prepStart = new CyclicBarrier(components.size() + 1,
+                new Runnable() {
+
+            public void run() {
+                inPrep = true;
+            }
+        });
+        final CyclicBarrier clockStart = new CyclicBarrier(components.size() + 1,
+                 new Runnable() {
+
+            public void run() {
+                inPrep = false;
+            }
+        });
         for (int i = 0; i < workers.length; i++) {
             AsyncComponentInterface r = components.get(i);
             r.configure(prepStart, clockStart);
@@ -232,8 +260,11 @@ public class Simulator {
             public void run() {
                 try {
                     while (true) {
+                        logger.debug("Starting prep "+Integer.toString(prepCount));
                         prepStart.await(3, TimeUnit.SECONDS);
+                        clockCount += 1;
                         clockStart.await(3, TimeUnit.SECONDS);
+                        prepCount += 1;
                     }
                 } catch (InterruptedException ex) {
                     logger.info("recieved interrupt probably caused by stop call");

@@ -19,6 +19,11 @@ public class MESIRunningState extends MESICacheControllerState {
     MESIBusMessage currentRound;
     final MemoryInstruction pendingRequest;
 
+    @Override
+    public String toString() {
+        return "MESIRunningState("+currentRound.toString()+","+pendingRequest.toString()+")";
+    }
+
     public MESIRunningState(MESIBusMessage currentRound, MemoryInstruction pendingRequest, MESICacheController controller) {
         super(controller);
         this.currentRound = currentRound;
@@ -27,7 +32,6 @@ public class MESIRunningState extends MESICacheControllerState {
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveMemoryResponse(MemoryInstruction response) {
-        logger.debug("recieveMemoryResponse");
         if (response.getType() == InstructionType.Load) {
             // must have been handling a Nack on a cache-to-cache get.
             assert response.getInAddress() == pendingRequest.getInAddress();
@@ -50,7 +54,6 @@ public class MESIRunningState extends MESICacheControllerState {
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> receiveBusResponse(MESIBusMessage b) {
-        logger.debug("recieveBusResponse("+b.toString()+")");
         CacheLine<MESILineState> line;
         // must have been a cache to cache round requiring a response: Get or GetX
         switch (b.type) {
