@@ -19,14 +19,12 @@ import org.cs533.newprocessor.simulator.Simulator;
 public class MainMemory implements ComponentInterface, MemoryInterface {
 
     public static final int LATENCY = Globals.MAIN_MEMORY_LATENCY; // MADE UP VALUE HERE
-
     static Logger logger = Logger.getLogger(MainMemory.class.getName());
     /* input port */
     LinkedBlockingQueue<MemoryInstruction> inQueue;
     /* state variables */
     MemoryInstruction toDo;
     byte[] memory = new byte[Globals.TOTAL_MEMORY_SIZE]; // 512K main memory
-    int waitCycles = 0;
     boolean isProcessing = false;
 
     public MainMemory() {
@@ -49,18 +47,18 @@ public class MainMemory implements ComponentInterface, MemoryInterface {
             toDo = inQueue.poll();
             if (toDo != null) {
                 isProcessing = true;
-                waitCycles = 0;
             }
         }
     }
 
     public void runClock() {
         if (isProcessing) {
-            if (waitCycles++ == getLatency()) {
-                runMemoryInstruction();
-                isProcessing = false;
-                toDo.setIsCompleted(true);
-            }
+            Simulator.incrementClockTicks(LATENCY);
+            Simulator.incrementPrepTicks(LATENCY);
+            runMemoryInstruction();
+            isProcessing = false;
+            toDo.setIsCompleted(true);
+
         }
     }
 
