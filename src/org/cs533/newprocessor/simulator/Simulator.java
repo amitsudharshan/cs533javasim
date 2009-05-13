@@ -6,6 +6,7 @@ package org.cs533.newprocessor.simulator;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
@@ -41,19 +42,17 @@ public class Simulator {
     static final HashMap<String, Integer> eventCounter = new HashMap<String, Integer>();
     public static Thread simulatorThread;
     public static boolean isRunning = false;
-    static Object tickLock = new Object();
+    static final Object tickLock = new Object();
     static boolean LAUNCH_GUI = false;
     static boolean TRACE = false;
-
 
     public static void main(String[] args) throws Exception {
         Logger.getRootLogger().setLevel(Level.INFO);
         // Logger.getLogger("CacheController").setLevel(Level.DEBUG);
-        //Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
+        //    Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
         BasicConfigurator.configure();
         String example = "pmatrixmultiply.asm";
-        String asmFileName = new File(new File(System.getProperty("user.dir")).toURI()
-                .resolve("src/org/cs533/asm/"+example)).toString();
+        String asmFileName = new File(new File(System.getProperty("user.dir")).toURI().resolve("src/org/cs533/asm/" + example)).toString();
         System.out.println(asmFileName);
         if (args.length > 0) {
             asmFileName = args[0];
@@ -62,9 +61,19 @@ public class Simulator {
         doTest(MESIBusMessage.class, MESICacheController.class, asmFileName);
     }
 
-    static <Msg extends AbstractBusMessage<Msg>,
-              Cache extends CacheController<Msg>>
-           void doTest(Class<Msg> _, Class<Cache> cache, String asmFileName) throws Exception {
+    public static void incrementClockTicks(int incrementBy) {
+        synchronized (tickLock) {
+            clockCount += incrementBy;
+        }
+    }
+
+    public static void incrementPrepTicks(int incrementBy) {
+        synchronized (tickLock) {
+            prepCount += incrementBy;
+        }
+    }
+
+    static <Msg extends AbstractBusMessage<Msg>, Cache extends CacheController<Msg>> void doTest(Class<Msg> _, Class<Cache> cache, String asmFileName) throws Exception {
         //   ExecutableImage exec = ExecutableImage.loadImageFromFile(imageFileName);
         ExecutableImage exec = Assembler.getFullImage(asmFileName);
         MemoryInterface m = new MainMemory(exec.getMemoryImage());
@@ -79,12 +88,13 @@ public class Simulator {
             }
             pCore[i] = new ProcessorCore(pcStart[i], l1, i);
             if (LAUNCH_GUI) {
-                MainSimulatorFrame r = MainSimulatorFrame.getFrameAndShow(pCore[i]);
-                r.spawnUpdatingThread();
+                MainSimulatorFrame.getFrameAndShow(pCore[i]).spawnUpdatingThread();
+
             }
         }
-        if (!LAUNCH_GUI)
+        if (!LAUNCH_GUI) {
             runSimulation();
+        }
         int doneProcessor = 0;
         while (doneProcessor < pCore.length) {
             if (pCore[doneProcessor].isHalted()) {
@@ -98,12 +108,12 @@ public class Simulator {
 
     public static String getPhase() {
         if (!isRunning) {
-            return "Not Started, preps "+Integer.toString(prepCount)+", clocks "+Integer.toString(clockCount);
+            return "Not Started, preps " + Integer.toString(prepCount) + ", clocks " + Integer.toString(clockCount);
         }
         if (inPrep) {
-            return "Prep"+Integer.toString(prepCount);
+            return "Prep" + Integer.toString(prepCount);
         } else {
-            return "Clock"+Integer.toString(clockCount);
+            return "Clock" + Integer.toString(clockCount);
         }
     }
     static boolean inPrep = true;
@@ -137,11 +147,16 @@ public class Simulator {
 
     public static void printStatistics() {
         synchronized (eventCounter) {
-            for (String key : eventCounter.keySet()) {
+            ArrayList<String> sortedCounter = new ArrayList<String>(eventCounter.keySet());
+            Collections.sort(sortedCounter);
+            for (String key : sortedCounter) {
                 System.out.println("For event: " + key + " count is " + eventCounter.get(key));
             }
         }
-        System.out.println("Finished running at tick "+getPhase());
+        System.out.println("Finished running at tick " + getPhase());
+
+        System.out.println("With settings: " + Globals.getGlobalsString());
+        System.out.println("L1Cache size is " + Integer.toString(Globals.L1_SIZE_IN_NUMBER_OF_LINES));
     }
 
     public static void registerComponent(ComponentInterface component) {
@@ -260,17 +275,17 @@ public class Simulator {
         final CyclicBarrier prepStart = new CyclicBarrier(components.size() + 1,
                 new Runnable() {
 
-            public void run() {
-                inPrep = true;
-            }
-        });
+                    public void run() {
+                        inPrep = true;
+                    }
+                });
         final CyclicBarrier clockStart = new CyclicBarrier(components.size() + 1,
-                 new Runnable() {
+                new Runnable() {
 
-            public void run() {
-                inPrep = false;
-            }
-        });
+                    public void run() {
+                        inPrep = false;
+                    }
+                });
         for (int i = 0; i < workers.length; i++) {
             AsyncComponentInterface r = components.get(i);
             r.configure(prepStart, clockStart);
@@ -282,7 +297,7 @@ public class Simulator {
             public void run() {
                 try {
                     while (true) {
-                        logger.debug("Starting prep "+Integer.toString(prepCount));
+                        logger.debug("Starting prep " + Integer.toString(prepCount));
                         prepStart.await(3, TimeUnit.SECONDS);
                         clockCount += 1;
                         clockStart.await(3, TimeUnit.SECONDS);

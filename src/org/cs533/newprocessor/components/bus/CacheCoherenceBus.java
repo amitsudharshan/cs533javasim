@@ -63,6 +63,7 @@ public class CacheCoherenceBus<BusMessage> implements ComponentInterface {
                 do {
                     msg = clients.get(j).getBusMessage();
                     if (msg != null) {
+                        Simulator.logEvent("CacheCoherenceBus: Got Message From Client");
                         // Simulator.logEvent("GetMsg - client "+j+" has message");
                         break;
                     }
