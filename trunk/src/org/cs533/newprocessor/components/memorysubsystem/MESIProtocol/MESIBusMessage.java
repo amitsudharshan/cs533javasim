@@ -77,7 +77,7 @@ public class MESIBusMessage extends AbstractBusMessage<MESIBusMessage> {
     }
 
     public static MESIBusMessage Invalidate(int address) {
-        return new MESIBusMessage(MESIBusMessage.MESIBusMessageType.Invalidate, address, null, null, null);
+        return new MESIBusMessage(MESIBusMessage.MESIBusMessageType.Invalidate, address, null, new AckAggregator(), null);
     }
 
     public static MESIBusMessage AckData(byte[] data) {

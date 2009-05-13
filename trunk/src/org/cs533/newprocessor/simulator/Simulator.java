@@ -19,9 +19,15 @@ import org.cs533.newprocessor.AsyncComponentInterface;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.Globals;
 import org.cs533.newprocessor.assembler.Assembler;
+import org.cs533.newprocessor.components.bus.AbstractBusMessage;
+import org.cs533.newprocessor.components.bus.CacheCoherenceBus;
 import org.cs533.newprocessor.components.core.ProcessorCore;
+import org.cs533.newprocessor.components.memorysubsystem.CacheController;
+import org.cs533.newprocessor.components.memorysubsystem.MESIProtocol.MESIBusMessage;
+import org.cs533.newprocessor.components.memorysubsystem.MESIProtocol.MESICacheController;
 import org.cs533.newprocessor.components.memorysubsystem.MainMemory;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInterface;
+import org.cs533.newprocessor.components.memorysubsystem.NoisyCacheCoherenceState;
 import org.cs533.newprocessor.simulator.GUI.MainSimulatorFrame;
 
 /**
@@ -37,10 +43,62 @@ public class Simulator {
     public static boolean isRunning = false;
     static Object tickLock = new Object();
     static boolean LAUNCH_GUI = false;
+    static boolean TRACE = false;
+
+
+    public static void main(String[] args) throws Exception {
+        Logger.getRootLogger().setLevel(Level.INFO);
+        // Logger.getLogger("CacheController").setLevel(Level.DEBUG);
+        Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
+        BasicConfigurator.configure();
+        String example = "cands.asm";
+        String asmFileName = new File(new File(System.getProperty("user.dir")).toURI()
+                .resolve("src/org/cs533/asm/"+example)).toString();
+        System.out.println(asmFileName);
+        if (args.length > 0) {
+            asmFileName = args[0];
+        }
+        // doTest(FireflyBusMessage.class, FireflyCacheController.class, asmFileName);
+        doTest(MESIBusMessage.class, MESICacheController.class, asmFileName);
+    }
+
+    static <Msg extends AbstractBusMessage<Msg>,
+              Cache extends CacheController<Msg>>
+           void doTest(Class<Msg> _, Class<Cache> cache, String asmFileName) throws Exception {
+        //   ExecutableImage exec = ExecutableImage.loadImageFromFile(imageFileName);
+        ExecutableImage exec = Assembler.getFullImage(asmFileName);
+        MemoryInterface m = new MainMemory(exec.getMemoryImage());
+        CacheCoherenceBus<Msg> bus = new CacheCoherenceBus<Msg>(m);
+        int[] pcStart = exec.getInitialPC();
+        ProcessorCore[] pCore = new ProcessorCore[pcStart.length];
+        for (int i = 0; i < pCore.length; i++) {
+            Cache l1 = cache.getConstructor(int.class).newInstance(i);
+            bus.registerClient(l1);
+            if (TRACE) {
+                l1.setState(new NoisyCacheCoherenceState(l1.getState()));
+            }
+            pCore[i] = new ProcessorCore(pcStart[i], l1, i);
+            if (LAUNCH_GUI) {
+                MainSimulatorFrame r = MainSimulatorFrame.getFrameAndShow(pCore[i]);
+                r.spawnUpdatingThread();
+            }
+        }
+        if (!LAUNCH_GUI)
+            runSimulation();
+        int doneProcessor = 0;
+        while (doneProcessor < pCore.length) {
+            if (pCore[doneProcessor].isHalted()) {
+                doneProcessor++;
+            }
+            Thread.sleep(10);
+        }
+        stopSimulation();
+        printStatistics();
+    }
 
     public static String getPhase() {
         if (!isRunning) {
-            return "Not Started";
+            return "Not Started, preps "+Integer.toString(prepCount)+", clocks "+Integer.toString(clockCount);
         }
         if (inPrep) {
             return "Prep"+Integer.toString(prepCount);
@@ -83,43 +141,7 @@ public class Simulator {
                 System.out.println("For event: " + key + " count is " + eventCounter.get(key));
             }
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        Logger.getRootLogger().setLevel(Level.INFO);
-        Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
-        BasicConfigurator.configure();
-        String asmFileName = new File(new File(System.getProperty("user.dir")).toURI()
-                .resolve("src/org/cs533/asm/producerconsumerqueue.asm")).toString();
-        System.out.println(asmFileName);
-        if (args.length > 0) {
-            asmFileName = args[0];
-        }
-        //   ExecutableImage exec = ExecutableImage.loadImageFromFile(imageFileName);
-        ExecutableImage exec = Assembler.getFullImage(asmFileName);
-        MemoryInterface m = new MainMemory(exec.getMemoryImage());
-        // CacheCoherenceBus<MIProtocol.MIBusMessage> bus = new CacheCoherenceBus<MIProtocol.MIBusMessage>(m);
-        int[] pcStart = exec.getInitialPC();
-        ProcessorCore[] pCore = new ProcessorCore[pcStart.length];
-        for (int i = 0; i < pCore.length; i++) {
-            //       MemoryInterface l1 = new L1Cache<MIProtocol.MIBusMessage, MIProtocol.MILineState, MIProtocol>(new MIProtocol());
-            //     bus.registerClient((L1Cache) l1);
-            pCore[i] = new ProcessorCore(pcStart[i], m, i);
-            if (LAUNCH_GUI) {
-                MainSimulatorFrame r = MainSimulatorFrame.getFrameAndShow(pCore[i]);
-                r.spawnUpdatingThread();
-            }
-        }
-        runSimulation();
-        int doneProcessor = 0;
-        while (doneProcessor < pCore.length) {
-            if (pCore[doneProcessor].isHalted()) {
-                doneProcessor++;
-            }
-            Thread.sleep(10);
-        }
-        stopSimulation();
-        printStatistics();
+        System.out.println("Finished running at tick "+getPhase());
     }
 
     public static void registerComponent(ComponentInterface component) {

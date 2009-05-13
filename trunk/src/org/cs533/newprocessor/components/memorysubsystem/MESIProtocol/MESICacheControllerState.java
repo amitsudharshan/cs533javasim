@@ -23,7 +23,7 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
     protected int dirtyWritebackAddr = -1;
 
     public MESICacheControllerState(MESICacheController controller) {
-        logger = Logger.getLogger(controller.toString()+"."+this.getClass().getSimpleName());
+        logger = controller.getChildLogger(this.getClass().getSimpleName());
         this.controller = controller;
     }
 
@@ -78,13 +78,13 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
                 // should only occur when upgrading a SHARED line to exclusive
                 line = controller.data.get(b.address);
                 if (line == null) {
-                    return noReply();
+                    return noJump(MESIBusMessage.Nack());
                 } else {
                     switch (line.state) {
                         case SHARED:
                             line.state = MESILineState.INVALID;
                         case INVALID:
-                            return noReply();
+                            return noJump(MESIBusMessage.Nack());
                         default:
                             logger.fatal("Got INVALIDATE in state " + line.state.toString());
                             throw new RuntimeException("Got INVALIDATE in state " + line.state.toString());

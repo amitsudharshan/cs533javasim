@@ -35,6 +35,14 @@ public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
         logger.debug("state -> "+state.toString());
     }
 
+    public CacheControllerState<Msg> getState() {
+        return state;
+    }
+
+    public Logger getChildLogger(String childName) {
+        return Logger.getLogger(logger.getName()+"."+childName);
+    }
+
     protected CacheController(Logger logger) {
         this.logger = logger;
         Simulator.registerComponent(this);
