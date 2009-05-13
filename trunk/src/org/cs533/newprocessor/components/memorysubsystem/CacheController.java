@@ -5,6 +5,7 @@
 package org.cs533.newprocessor.components.memorysubsystem;
 
 import java.util.ArrayDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 import org.apache.log4j.Logger;
 import org.cs533.newprocessor.ComponentInterface;
 import org.cs533.newprocessor.components.bus.AbstractBusMessage;
@@ -23,7 +24,8 @@ public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
     protected Logger logger;
     
     private CacheControllerState<Msg> state;
-    protected ArrayDeque<MemoryInstruction> pendingRequests;
+    //protected ArrayDeque<MemoryInstruction> pendingRequests;
+    protected LinkedBlockingDeque<MemoryInstruction> pendingRequests;
     protected MemoryInstruction currentRequest;
     protected Msg responseToBus;
     protected Msg currentTransaction;
@@ -46,7 +48,7 @@ public abstract class CacheController<Msg extends AbstractBusMessage<Msg>>
     protected CacheController(Logger logger) {
         this.logger = logger;
         Simulator.registerComponent(this);
-        pendingRequests = new ArrayDeque<MemoryInstruction>();
+        pendingRequests = new LinkedBlockingDeque<MemoryInstruction>();
     }
 
     public void recieveMessage(Msg msg) {

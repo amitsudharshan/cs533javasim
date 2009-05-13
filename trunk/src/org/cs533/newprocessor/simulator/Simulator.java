@@ -48,10 +48,10 @@ public class Simulator {
 
     public static void main(String[] args) throws Exception {
         Logger.getRootLogger().setLevel(Level.INFO);
-        // Logger.getLogger("CacheController").setLevel(Level.DEBUG);
+        //Logger.getLogger("CacheController").setLevel(Level.DEBUG);
         Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
         BasicConfigurator.configure();
-        String example = "cands.asm";
+        String example = "producerconsumerqueue.asm";
         String asmFileName = new File(new File(System.getProperty("user.dir")).toURI()
                 .resolve("src/org/cs533/asm/"+example)).toString();
         System.out.println(asmFileName);
