@@ -19,13 +19,13 @@ public class MESICacheController extends CacheController<MESIBusMessage> {
 
     @Override
     public String toString() {
-        return "MESICacheController-"+Integer.toString(cacheID);
+        return "MESICacheController."+Integer.toString(cacheID);
     }
 
     final LRUEvictHashTable<CacheLine<MESILineState>> data;
 
     public MESICacheController(int cacheID_) {
-        super(Logger.getLogger("MESICacheController-"+Integer.toString(cacheID_)));
+        super(Logger.getLogger("CacheController.MESI."+Integer.toString(cacheID_)));
         cacheID = cacheID_;
         setState(new MESINotReadyState(this));
         data = new LRUEvictHashTable<CacheLine<MESILineState>>(Globals.L1_SIZE_IN_NUMBER_OF_LINES);

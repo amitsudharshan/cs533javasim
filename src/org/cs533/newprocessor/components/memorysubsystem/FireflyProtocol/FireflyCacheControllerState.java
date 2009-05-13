@@ -22,7 +22,7 @@ public abstract class FireflyCacheControllerState extends CacheControllerState<F
     protected FireflyCacheController controller;
 
     public FireflyCacheControllerState(FireflyCacheController controller) {
-        logger = Logger.getLogger(controller.toString()+"."+this.getClass().getSimpleName());
+        logger = controller.getChildLogger(this.getClass().getSimpleName());
         this.controller = controller;
     }
 

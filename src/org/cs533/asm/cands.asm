@@ -4,7 +4,7 @@
 .data
 // this is the lock variable. It is locked with value 1 and unlocked with value 0
 $lock 0
-$protectedCounter 0x15
+$protectedCounter 0x100
 
 
 .instructions
@@ -59,4 +59,7 @@ halt
 
 .startpc
 
+#startInstructions
+#startInstructions
+#startInstructions
 #startInstructions

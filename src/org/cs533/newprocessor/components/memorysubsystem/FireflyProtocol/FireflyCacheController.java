@@ -25,7 +25,7 @@ public class FireflyCacheController extends CacheController<FireflyBusMessage> {
     final LRUEvictHashTable<CacheLine<FireflyLineState>> data;
 
     public FireflyCacheController(int cacheID_) {
-        super(Logger.getLogger("FireflyCacheController."+Integer.toString(cacheID_)));
+        super(Logger.getLogger("CacheController.Firefly."+Integer.toString(cacheID_)));
         cacheID = cacheID_;
         setState(new FireflyNotReadyState(this));
         data = new LRUEvictHashTable<CacheLine<FireflyLineState>>(Globals.L1_SIZE_IN_NUMBER_OF_LINES);
