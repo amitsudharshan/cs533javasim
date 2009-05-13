@@ -16,6 +16,9 @@ import org.cs533.newprocessor.Globals;
 public class MESICacheController extends CacheController<MESIBusMessage> {
 
     int cacheID;
+    public int dirtyWritebackAddr = -1;
+    //used by client states to not be surprsied by the Writeback when their
+    //line is in the shared state, when they were the one that just provided the line
 
     @Override
     public String toString() {

@@ -28,6 +28,7 @@ public class MESIRunningState extends MESICacheControllerState {
         super(controller);
         this.currentRound = currentRound;
         this.pendingRequest = pendingRequest;
+        assert controller.dirtyWritebackAddr == -1;
     }
 
     @Override
