@@ -48,7 +48,7 @@ public class Simulator {
 
     public static void main(String[] args) throws Exception {
         Logger.getRootLogger().setLevel(Level.INFO);
-        Logger.getLogger("CacheController").setLevel(Level.DEBUG);
+        // Logger.getLogger("CacheController").setLevel(Level.DEBUG);
         //Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
         BasicConfigurator.configure();
         String example = "pmatrixmultiply.asm";

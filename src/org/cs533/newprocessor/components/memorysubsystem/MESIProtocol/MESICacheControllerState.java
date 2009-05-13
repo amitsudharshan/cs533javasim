@@ -30,25 +30,25 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
         return noReply();
     }
 
-    protected final StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> handleBroadcastMessage (MESIBusMessage b) {
+    protected final MESIBusMessage handleBroadcastMessage (MESIBusMessage b) {
         CacheLine<MESILineState> line;
         switch (b.type) {
             case Get:
                 line = controller.data.get(b.address);
                 if (line == null) {
-                    return noJump(MESIBusMessage.Nack());
+                    return MESIBusMessage.Nack();
                 } else {
                     switch (line.state) {
                         case INVALID:
-                            return noJump(MESIBusMessage.Nack());
+                            return MESIBusMessage.Nack();
                         case EXCLUSIVE:
                             line.state = MESILineState.SHARED;
                         case SHARED:
-                            return noJump(MESIBusMessage.AckData(line.data));
+                            return MESIBusMessage.AckData(line.data);
                         case MODIFIED:
                             line.state = MESILineState.SHARED;
                             controller.dirtyWritebackAddr = line.address;
-                            return noJump(MESIBusMessage.AckDirty(line.data));
+                            return MESIBusMessage.AckDirty(line.data);
                         default:
                             throw new RuntimeException("Unknown line state handling Get "+line.state.toString());
                     }
@@ -56,18 +56,18 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
             case GetX:
                 line = controller.data.get(b.address);
                 if (line == null) {
-                    return noJump(MESIBusMessage.Nack());
+                    return MESIBusMessage.Nack();
                 } else {
                     switch (line.state) {
                         case INVALID:
-                            return noJump(MESIBusMessage.Nack());
+                            return MESIBusMessage.Nack();
                         case EXCLUSIVE:
                         case SHARED:
                             line.state = MESILineState.INVALID;
-                            return noJump(MESIBusMessage.AckData(line.data));
+                            return MESIBusMessage.AckData(line.data);
                         case MODIFIED:
                             line.state = MESILineState.INVALID;
-                            return noJump(MESIBusMessage.AckDirty(line.data));
+                            return MESIBusMessage.AckDirty(line.data);
                         default:
                             throw new RuntimeException("Unknown line state handling GetX "+line.state.toString());
                     }
@@ -76,13 +76,13 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
                 // should only occur when upgrading a SHARED line to exclusive
                 line = controller.data.get(b.address);
                 if (line == null) {
-                    return noJump(MESIBusMessage.Nack());
+                    return MESIBusMessage.Nack();
                 } else {
                     switch (line.state) {
                         case SHARED:
                             line.state = MESILineState.INVALID;
                         case INVALID:
-                            return noJump(MESIBusMessage.Nack());
+                            return MESIBusMessage.Nack();
                         default:
                             logger.fatal("Got INVALIDATE in state " + line.state.toString());
                             throw new RuntimeException("Got INVALIDATE in state " + line.state.toString());
@@ -104,14 +104,14 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
                         logger.fatal("Got Writeback with line in state " + line.state.toString()+", cache state "+this.toString());
                         throw new RuntimeException("Got Writeback with line in state " + line.state.toString()+", cache state "+this.toString());
                     } else {
-                        return noReply();
+                        return null;
                     }
                 }
             case Nack:
             case AckData:
             case AckDirty:
             case Done:
-                return noReply();
+                return null;
             default:
                 logger.fatal("Unknown bus message type " + b.type.toString());
                 throw new RuntimeException();
