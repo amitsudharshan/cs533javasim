@@ -19,8 +19,7 @@ public class MESINotReadyState extends MESICacheControllerState {
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveBroadcastMessage(MESIBusMessage b) {
-        StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> action = handleBroadcastMessage(b);
-        return action;
+        return noJump(handleBroadcastMessage(b));
     }
 
     @Override
