@@ -19,8 +19,6 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
  */
 public abstract class MESICacheControllerState extends CacheControllerState<MESIBusMessage> {
     protected MESICacheController controller;
-    // track an address we dirtyAcked, so we're not surprised to see it written back
-    protected int dirtyWritebackAddr = -1;
 
     public MESICacheControllerState(MESICacheController controller) {
         logger = controller.getChildLogger(this.getClass().getSimpleName());
@@ -49,7 +47,7 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
                             return noJump(MESIBusMessage.AckData(line.data));
                         case MODIFIED:
                             line.state = MESILineState.SHARED;
-                            dirtyWritebackAddr = line.address;
+                            controller.dirtyWritebackAddr = line.address;
                             return noJump(MESIBusMessage.AckDirty(line.data));
                         default:
                             throw new RuntimeException("Unknown line state handling Get "+line.state.toString());
@@ -94,13 +92,17 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
             case Writeback:
                 // someone else had to go to memory for the line, so we may only have it in INVALID state.
                 line = controller.data.get(b.address);
-                if (dirtyWritebackAddr == b.address) {
+                if (controller.dirtyWritebackAddr == b.address) {
                     // unless they were doing a writeback for us
-                    dirtyWritebackAddr = -1;
+                    if (line != null && !(line.state == MESILineState.INVALID || line.state == MESILineState.SHARED)) {
+                        logger.fatal("Saw own dirty Writeback with line in unexpected state " + line.state.toString()+", cache state "+this.toString());
+                        throw new RuntimeException("Saw own dirty Writeback with line in unexpected state " + line.state.toString()+", cache state "+this.toString());
+                    }
+                    controller.dirtyWritebackAddr = -1;
                 } else {
                     if (line != null && line.state != MESILineState.INVALID) {
-                        logger.fatal("Got "+b.type.toString()+" in state " + line.state.toString());
-                        throw new RuntimeException("Got "+b.type.toString()+" in state " + line.state.toString());
+                        logger.fatal("Got Writeback with line in state " + line.state.toString()+", cache state "+this.toString());
+                        throw new RuntimeException("Got Writeback with line in state " + line.state.toString()+", cache state "+this.toString());
                     } else {
                         return noReply();
                     }
