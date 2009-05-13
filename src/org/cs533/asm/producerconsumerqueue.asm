@@ -72,7 +72,6 @@
 
     #startConsuming
         //get the lock
-        add r0 r0 r11
         jal #lock
         //load pointer to head into r10
         lw r3 r10
@@ -88,8 +87,16 @@
         sw r3 r10
         //unlock
         jal #unlock
+        //do a busy wait
+        jal #runBusyLoop
         //go back through the loop
         beq r3 r3 #startConsuming
+
+    #runBusyLoop
+        loadv r10 0x10
+        addi r10 r10 0xFFFF
+        bgez r10 #runBusyLoop
+        ret
 
     #emptyQueue
         jal #unlock
