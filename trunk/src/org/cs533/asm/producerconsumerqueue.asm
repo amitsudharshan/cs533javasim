@@ -6,6 +6,7 @@
     $lock 0
     $headOfQueue 0
     $tailOfQueue 0
+    $busyAmount 0xE
 .instructions
 
     #registerInitialization
@@ -33,6 +34,9 @@
         lui r6 U0x0
         ori r6 r6 L0x0
 
+        //r29 holds the end value
+        load r29 0x123
+        
 // r7 through r9 are reserved for global registers
         // r7 holds a return register
 
@@ -83,26 +87,39 @@
         addi r10 r10 0x4
         //get memory[r10] into r11 (this is the value pointed to by head
         lw r10 r11
+        //subtract the value we get from the max value and store in r28
+        sub r11 r29 r28
+        // if r28 is >=0 then we should halt
+        bgez r28 #unlockAndHalt
         //store new head value
         sw r3 r10
         //unlock
         jal #unlock
         //do a busy wait
+// load the amount of ALU busy instructions to sit for
+        load r30 0xA
+        //jump to do the number of instructions
         jal #runBusyLoop
-        //go back through the loop
-        beq r3 r3 #startConsuming
+        //rerun consuming
+        beq r30 r30 #startConsuming
 
-    #runBusyLoop
-        loadv r10 0x10
-        addi r10 r10 0xFFFF
-        bgez r10 #runBusyLoop
-        ret
 
     #emptyQueue
+        lw r10 r11
+        //subtract the value we get from the max value and store in r28
+        sub r11 r29 r28
+        // if r28 is >=0 then we should halt
+        blez r28 #unlockAndHalt
         jal #unlock
         beq r3 r3 #startConsuming
 
+    #runBusyLoop
+        addi r30 r30 0xFFFF
+        beq r30 r0 #return
+        beq r30 r30 #runBusyLoop
 
+    #return
+        ret
     #startProducing
         //get the lock
         jal #lock
@@ -117,6 +134,15 @@
         //store new tail value
         sw r4 r10
         jal #unlock
+        //store incrementer into r27
+        add r6 r0 r27
+        //compare incrementer to r29 store in r28
+        sub r27 r29 r28
+        bgez r28 #unlockAndHalt
+        
+        load r30 0x5
+        //jump to do the number of instructions
+        jal #runBusyLoop
         beq r3 r3 #startProducing
 
 
@@ -132,7 +158,12 @@
     #unlock
         //set M[$lock] to 0
         sw r1 r0
-        jr r7
+        ret
+
+#unlockAndHalt
+    jal #unlock
+    halt
+
 
 
 .startpc
