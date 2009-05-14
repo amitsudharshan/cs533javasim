@@ -35,7 +35,7 @@
         ori r6 r6 L0x0
 
         //r29 holds the end value
-        load r29 0x123
+        load r29 0xF
         
 // r7 through r9 are reserved for global registers
         // r7 holds a return register
@@ -122,7 +122,6 @@
         ret
     #startProducing
         //get the lock
-        jal #lock
         //load pointer to tail into r10
         lw r4 r10
         // increment the tail by 4
@@ -133,12 +132,11 @@
         addi r6 r6 0x1
         //store new tail value
         sw r4 r10
-        jal #unlock
         //store incrementer into r27
         add r6 r0 r27
         //compare incrementer to r29 store in r28
         sub r27 r29 r28
-        bgez r28 #unlockAndHalt
+        bgez r28 #halt
         
         load r30 0x5
         //jump to do the number of instructions
@@ -162,6 +160,7 @@
 
 #unlockAndHalt
     jal #unlock
+#halt
     halt
 
 
@@ -169,6 +168,3 @@
 .startpc
     #producerInitialization
     #consumerInitialization
-    #consumerInitialization
-  #consumerInitialization
-  #consumerInitialization

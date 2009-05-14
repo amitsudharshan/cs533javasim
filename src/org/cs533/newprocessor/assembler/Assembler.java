@@ -11,7 +11,9 @@ import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.cs533.newprocessor.Globals;
@@ -42,6 +44,8 @@ public class Assembler {
     ArrayList<Integer> pcStart = new ArrayList<Integer>();
     ArrayList<int[]> labelsToFix = new ArrayList<int[]>();
     ArrayList<int[]> instructionsToFix = new ArrayList<int[]>();
+    Integer[] numProcessors = null;
+    int pCount = 0;
 
     public Assembler() {
         opCodeToAssemblerMap = OpcodeMetaData.populateOpCodeAssemblerMap();
@@ -77,12 +81,14 @@ public class Assembler {
     }
 
     public static void assembleFile(String inputFile, String outputFile) {
-        writeImageToFile(getFullImage(inputFile), outputFile);
+        writeImageToFile(getFullImage(inputFile, null), outputFile);
     }
 
-    public static ExecutableImage getFullImage(String inputFile) {
+    public static ExecutableImage getFullImage(String inputFile, Integer[] numProcessors_) {
         try {
             Assembler a = new Assembler();
+
+            a.numProcessors = numProcessors_;
             ArrayList<String> lines = a.getAndStoreLines(inputFile);
             int counter = 0;
             //PASS ONE WILL GET THE LABELS IN AND MOST INSTRUCTIONS
@@ -90,6 +96,7 @@ public class Assembler {
                 a.processLine(line, counter++);
             }
             a.variableToAddressMap.put("$heap", a.nextAddress);
+            System.out.println("pc start is " + a.pcStart.size());
             int[] pcInitValues = new int[a.pcStart.size()];
             for (int i = 0; i < pcInitValues.length; i++) {
                 pcInitValues[i] = a.pcStart.get(i);
@@ -109,6 +116,7 @@ public class Assembler {
                 }
 
             }
+            System.out.println("DONE Assembling");
             return new ExecutableImage(a.createMemoryForImage(), pcInitValues);
         } catch (IOException ex) {
             Logger.getLogger(Assembler.class.getName()).log(Level.SEVERE, null, ex);
@@ -179,7 +187,14 @@ public class Assembler {
                 }
                 break;
             case pcinit:
-                pcStart.add(labelToAddressMap.get(split[0]));
+                if (numProcessors == null) {
+                    pcStart.add(labelToAddressMap.get(split[0]));
+                } else if (!pcStart.contains(labelToAddressMap.get(split[0]))) {
+                for (int i = 0; i < numProcessors[pCount]; i++) {
+                    pcStart.add(labelToAddressMap.get(split[0]));
+                }
+                pCount++;
+            }
             default:
                 break;
         }
@@ -226,8 +241,22 @@ public class Assembler {
         return toReturn;
     }
 
+    public BufferedReader getBufferedReaderFromURL(String url) throws IOException {
+        BufferedReader bRead = null;
+        URL u = new URL(url);
+        System.out.println("retrieving URL from " + url);
+        bRead = new BufferedReader(new InputStreamReader(u.openStream()));
+        return bRead;
+
+    }
+
     public ArrayList<String> getAndStoreLines(String file) throws IOException {
-        BufferedReader bRead = new BufferedReader(new FileReader(file));
+        BufferedReader bRead = null;
+        if (file.startsWith("http")) {
+            bRead = getBufferedReaderFromURL(file);
+        } else {
+            bRead = new BufferedReader(new FileReader(file));
+        }
         ArrayList<String> tokens = new ArrayList<String>();
         String line = null;
         while ((line = bRead.readLine()) != null) {
