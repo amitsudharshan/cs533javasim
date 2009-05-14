@@ -169,21 +169,13 @@ public abstract class MESICacheControllerState extends CacheControllerState<MESI
             }
         }
     }
-    protected final StateAnd<MESIBusMessage,CacheControllerState<MESIBusMessage>> handleClientRequestAsMessage(MemoryInstruction request, CacheLine<MESILineState> line) {
-        Either<MemoryInstruction,MESIBusMessage> result = handleClientRequest(request, line);
-        if (result.isFirst) {
-            // nack acts as transaction done, because it has null aggregator and request
-            return andJump(MESIBusMessage.Done(), new MESIDoneState(result.first, controller));
-        } else {
-            return noJump(result.second);
-        }
-    }
+
     protected final StateAnd<MemoryInstruction,CacheControllerState<MESIBusMessage>> handleClientRequestAsMemory(MemoryInstruction request, CacheLine<MESILineState> line) {
         Either<MemoryInstruction,MESIBusMessage> result = handleClientRequest(request, line);
         if (result.isFirst) {
             return noJump(result.first);
         } else {
-            return jumpTo(new MESIReadyState(result.second, request, controller));
+            return jumpTo(new MESIReadyState(request, controller));
         }
     }
 }

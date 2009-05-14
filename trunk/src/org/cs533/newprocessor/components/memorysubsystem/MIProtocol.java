@@ -42,9 +42,11 @@ public class MIProtocol
         state = ProtocolState.Uninitialized;
     }
 
-    public enum MILineState {
-
-        MODIFIED, INVALID
+    public enum MILineState implements LineState {
+        MODIFIED, INVALID;
+        public boolean silentlyEvictable() {
+            return MILineState.INVALID == this;
+        }
     }
 
     public static enum MIBusMessageType {

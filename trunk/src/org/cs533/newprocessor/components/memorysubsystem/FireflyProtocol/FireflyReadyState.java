@@ -2,11 +2,11 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package org.cs533.newprocessor.components.memorysubsystem.FireflyProtocol;
 
 import java.util.Arrays;
 import org.cs533.newprocessor.components.bus.CacheControllerState;
+import org.cs533.newprocessor.components.bus.Either;
 import org.cs533.newprocessor.components.bus.StateAnd;
 import org.cs533.newprocessor.components.memorysubsystem.CacheLine;
 import org.cs533.newprocessor.components.memorysubsystem.FireflyProtocol.FireflyBusMessage.FireflyBusMessageType;
@@ -17,40 +17,51 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
  * @author amit
  */
 public class FireflyReadyState extends FireflyCacheControllerState {
-    final FireflyBusMessage message;
-    final MemoryInstruction pendingRequest;
 
-    FireflyReadyState(FireflyBusMessage message, MemoryInstruction pendingRequest, FireflyCacheController controller) {
+    final MemoryInstruction request;
+
+    FireflyReadyState(MemoryInstruction pendingRequest, FireflyCacheController controller) {
         super(controller);
-        this.message = message;
-        this.pendingRequest = pendingRequest;
+        this.request = pendingRequest;
     }
 
     @Override
     public StateAnd<FireflyBusMessage, CacheControllerState<FireflyBusMessage>> recieveBroadcastMessage(FireflyBusMessage b) {
-        logger.debug("recieveBroadcastMessage("+b.toString()+")");
-        // check if this is an update that will make our pending CAS fail.
-        // if we evicted a line we might as well wait till we get the bus for that,
-        // and rely on handleClientRequest to decide we are done as soon as
-        // the writeback comes back
-        if (pendingRequest.getType() == MemoryInstruction.InstructionType.CAS &&
-                message.type == FireflyBusMessageType.Update &&
+        // if this an update and our pending request is a CAS, check
+        // if it is possible to fail immediately.
+        if (request.getType() == MemoryInstruction.InstructionType.CAS &&
                 b.type == FireflyBusMessageType.Update &&
-                b.address == pendingRequest.getInAddress() &&
-                !Arrays.equals(b.data, pendingRequest.getCompareData()))
-        {
-            CacheLine<FireflyLineState> line = controller.data.get(b.address);
-            line.data = b.data;
-            line.state = FireflyLineState.SHARED;
-            pendingRequest.setOutData(line.data);
-            return andJump(FireflyBusMessage.Ack(), new FireflyDoneState(pendingRequest, controller));
+                b.address == request.getInAddress() &&
+                !Arrays.equals(b.data, request.getCompareData())) {
+            request.setOutData(b.data);
+            return andJump(handleBroadcastMessage(b), new FireflyDoneState(request, controller));
         }
-        return handleBroadcastMessage(b);
+        return noJump(handleBroadcastMessage(b));
     }
 
     @Override
     public StateAnd<FireflyBusMessage, CacheControllerState<FireflyBusMessage>> startTransaction() {
-        logger.debug("startTransaction");
-        return andJump(message, new FireflyRunningState(message, pendingRequest, controller));
+        // decide what our message actually should be
+        CacheLine<FireflyLineState> line = controller.data.get(request.getInAddress());
+        if (line == null) {
+            line = new CacheLine<FireflyLineState>(request.getInAddress(), null, FireflyLineState.INVALID);
+            CacheLine<FireflyLineState> evicted = controller.data.add(line);
+            if (evicted != null) {
+                FireflyBusMessage message = FireflyBusMessage.DirtyAckWriteback(evicted.address, evicted.data);
+                return andJump(message, new FireflyRunningState(message, request, controller));
+            }
+        }
+
+        return handleClientRequestAsMessage(request, line);
+    }
+
+    protected final StateAnd<FireflyBusMessage, CacheControllerState<FireflyBusMessage>> handleClientRequestAsMessage(MemoryInstruction request, CacheLine<FireflyLineState> line) {
+        Either<MemoryInstruction, FireflyBusMessage> result = handleClientRequest(request, line);
+        if (result.isFirst) {
+            // nack acts as transaction done, because it has null aggregator and request
+            return andJump(FireflyBusMessage.Done(), new FireflyDoneState(result.first, controller));
+        } else {
+            return andJump(result.second, new FireflyRunningState(result.second, request, controller));
+        }
     }
 }

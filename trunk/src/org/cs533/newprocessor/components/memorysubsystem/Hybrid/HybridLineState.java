@@ -1,6 +1,12 @@
 package org.cs533.newprocessor.components.memorysubsystem.Hybrid;
 
-public enum HybridLineState {
+import org.cs533.newprocessor.components.memorysubsystem.LineState;
 
-    MODIFIED, EXCLUSIVE, SHARED, INVALID
+public enum HybridLineState implements LineState {
+
+    MODIFIED, EXCLUSIVE, SHARED, INVALID;
+
+    public boolean silentlyEvictable() {
+        return this != MODIFIED;
+    }
 }

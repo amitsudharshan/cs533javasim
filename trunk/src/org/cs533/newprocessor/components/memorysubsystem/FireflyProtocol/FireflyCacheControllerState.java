@@ -38,25 +38,25 @@ public abstract class FireflyCacheControllerState extends CacheControllerState<F
         return noReply();
     }
 
-    protected final StateAnd<FireflyBusMessage, CacheControllerState<FireflyBusMessage>> handleBroadcastMessage (FireflyBusMessage b) {
+    protected final FireflyBusMessage handleBroadcastMessage (FireflyBusMessage b) {
         logger.debug("handleBroadcastMessage");
         CacheLine<FireflyLineState> line;
         switch (b.type) {
             case Get:
                 line = controller.data.get(b.address);
                 if (line == null) {
-                    return noJump(FireflyBusMessage.Nack());
+                    return FireflyBusMessage.Nack();
                 } else {
                     switch (line.state) {
                         case INVALID:
-                            return noJump(FireflyBusMessage.Nack());
+                            return FireflyBusMessage.Nack();
                         case EXCLUSIVE:
                             line.state = FireflyLineState.SHARED;
                         case SHARED:
-                            return noJump(FireflyBusMessage.AckData(line.data));
+                            return FireflyBusMessage.AckData(line.data);
                         case MODIFIED:
                             line.state = FireflyLineState.SHARED;
-                            return noJump(FireflyBusMessage.AckDirty(line.data));
+                            return FireflyBusMessage.AckDirty(line.data);
                         default:
                             throw new RuntimeException("Unknown line state handling Get "+line.state.toString());
                     }
@@ -64,14 +64,14 @@ public abstract class FireflyCacheControllerState extends CacheControllerState<F
             case Update:
                 line = controller.data.get(b.address);
                 if (line == null) {
-                    return noJump(FireflyBusMessage.Nack());
+                    return FireflyBusMessage.Nack();
                 } else {
                     switch (line.state) {
                         case INVALID:
-                            return noJump(FireflyBusMessage.Nack());
+                            return FireflyBusMessage.Nack();
                         case SHARED:
                             line.data = b.data;
-                            return noJump(FireflyBusMessage.Ack());
+                            return FireflyBusMessage.Ack();
                         case EXCLUSIVE:
                         case MODIFIED:
                             throw new RuntimeException("Got Update when had line in state "+line.state.toString());
@@ -86,7 +86,7 @@ public abstract class FireflyCacheControllerState extends CacheControllerState<F
                     logger.fatal("Got "+b.type.toString()+" in state " + line.state.toString());
                     throw new RuntimeException("Got "+b.type.toString()+" in state " + line.state.toString());
                 } else {
-                    return noReply();
+                    return null;
                 }
             case DirtyAckWriteback:
             case FinalWriteback:
@@ -94,7 +94,7 @@ public abstract class FireflyCacheControllerState extends CacheControllerState<F
             case AckData:
             case AckDirty:
             case Done:
-                return noReply();
+                return null;
             default:
                 logger.fatal("Unknown bus message type " + b.type.toString());
                 throw new RuntimeException();
@@ -152,21 +152,13 @@ public abstract class FireflyCacheControllerState extends CacheControllerState<F
             }
         }
     }
-    protected final StateAnd<FireflyBusMessage,CacheControllerState<FireflyBusMessage>> handleClientRequestAsMessage(MemoryInstruction request, CacheLine<FireflyLineState> line) {
-        Either<MemoryInstruction,FireflyBusMessage> result = handleClientRequest(request, line);
-        if (result.isFirst) {
-            // nack acts as transaction done, because it has null aggregator and request
-            return andJump(FireflyBusMessage.Done(), new FireflyDoneState(result.first, controller));
-        } else {
-            return noJump(result.second);
-        }
-    }
+
     protected final StateAnd<MemoryInstruction,CacheControllerState<FireflyBusMessage>> handleClientRequestAsMemory(MemoryInstruction request, CacheLine<FireflyLineState> line) {
         Either<MemoryInstruction,FireflyBusMessage> result = handleClientRequest(request, line);
         if (result.isFirst) {
             return noJump(result.first);
         } else {
-            return jumpTo(new FireflyReadyState(result.second, request, controller));
+            return jumpTo(new FireflyReadyState(request, controller));
         }
     }
 }
