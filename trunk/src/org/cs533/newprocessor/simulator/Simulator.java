@@ -47,11 +47,9 @@ public class Simulator {
     public static Thread simulatorThread;
     public static boolean isRunning = false;
     static Object tickLock = new Object();
-    static boolean LAUNCH_GUI = false;
-    static boolean TRACE = false;
-    static HashMap<String, Class[]> cacheTypes = new HashMap<String, Class[]>();
-
-
+    static final boolean LAUNCH_GUI = false;
+    static final boolean TRACE = false;
+    static final HashMap<String, Class[]> cacheTypes = new HashMap<String, Class[]>();
     static {
         cacheTypes.put("mesi", new Class[]{MESIBusMessage.class, MESICacheController.class});
         cacheTypes.put("firefly", new Class[]{FireflyBusMessage.class, FireflyCacheController.class});
@@ -64,13 +62,13 @@ public class Simulator {
         simulatorThread = null;
         isRunning = false;
         tickLock = new Object();
-        LAUNCH_GUI = false;
-        TRACE = false;
+        clockCount = 0;
+        prepCount = 0;
     }
 
     public static void runSimulations(String[] args) throws Exception {
         Logger.getRootLogger().setLevel(Level.INFO);
-        Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
+        Logger.getLogger(ProcessorCore.class).setLevel(Level.INFO);
         BasicConfigurator.configure();
         System.out.println("RUNNING TESTS");
         int i = 0;
@@ -88,7 +86,6 @@ public class Simulator {
         int numDifferentThreadGroups = Integer.parseInt(args[i++]);
         System.out.println("numDifferentThreadGroups " + numDifferentThreadGroups);
         ArrayList<Integer[]> numProcessorsPerThread = new ArrayList<Integer[]>();
-        BufferedWriter bWrite = getCSVWriterWithColumns(csvFile,numDifferentThreadGroups);
         for (int threadCount = 0; threadCount < numDifferentThreadGroups; threadCount++) {
             String[] split = args[i++].split(",");
             Integer[] toAdd = new Integer[split.length];
@@ -100,6 +97,8 @@ public class Simulator {
             System.out.println();
             numProcessorsPerThread.add(toAdd);
         }
+
+        BufferedWriter bWrite = getCSVWriterWithColumns(csvFile,numProcessorsPerThread.get(0).length);
         for (int numP = 0; numP < numProcessorsPerThread.size(); numP++) {
             for (int numC = minCacheLines; numC <= maxCacheLines; numC += cacheLinesStep) {
                 resetSimulation();
@@ -149,7 +148,7 @@ public class Simulator {
         }
         Logger.getRootLogger().setLevel(Level.INFO);
         // Logger.getLogger("CacheController").setLevel(Level.DEBUG);
-        //    Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
+            Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
         BasicConfigurator.configure();
         String example = "pmatrixmultiply.asm";
         String asmFileName = new File(new File(System.getProperty("user.dir")).toURI().resolve("src/org/cs533/asm/" + example)).toString();

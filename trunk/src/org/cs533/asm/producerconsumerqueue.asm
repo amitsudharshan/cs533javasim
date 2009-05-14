@@ -109,7 +109,7 @@
         //subtract the value we get from the max value and store in r28
         sub r11 r29 r28
         // if r28 is >=0 then we should halt
-        blez r28 #unlockAndHalt
+        bgez r28 #unlockAndHalt
         jal #unlock
         beq r3 r3 #startConsuming
 
@@ -128,8 +128,7 @@
         addi r10 r10 0x4
         //store the counter (r6) into the value pointed to by tail
         sw r10 r6
-        //increment counter
-        addi r6 r6 0x1
+
         //store new tail value
         sw r4 r10
         //store incrementer into r27
@@ -137,6 +136,9 @@
         //compare incrementer to r29 store in r28
         sub r27 r29 r28
         bgez r28 #halt
+        //increment counter
+        addi r6 r6 0x1
+
         
         load r30 0x5
         //jump to do the number of instructions
@@ -168,3 +170,5 @@
 .startpc
     #producerInitialization
     #consumerInitialization
+      #consumerInitialization
+  #consumerInitialization
