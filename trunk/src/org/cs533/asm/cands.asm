@@ -60,6 +60,3 @@ halt
 .startpc
 
 #startInstructions
-#startInstructions
-#startInstructions
-#startInstructions
