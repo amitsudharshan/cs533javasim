@@ -4,12 +4,12 @@
 .data
     // this is the lock variable. It is locked with value 1 and unlocked with value 0
     $lock 0
-   $firstMatrixRows 10
-   $firstMatrixColumns 10
-   $secondMatrixRows 10
-   $secondMatrixColumns 10
-   $resultMatrixRows 10
-   $resultMatrixColumns 10
+   $firstMatrixRows 15
+   $firstMatrixColumns 15
+   $secondMatrixRows 15
+   $secondMatrixColumns 15
+   $resultMatrixRows 15
+   $resultMatrixColumns 15
    
    $currRow 0
    $currCol 0
@@ -165,8 +165,4 @@ addi r0 r30 0x4
     sw r28 r14
     ret
 .startpc
-#startMultiply
-#startMultiply
-#startMultiply
-#startMultiply
 #startMultiply
