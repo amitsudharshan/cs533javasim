@@ -4,7 +4,9 @@
  */
 package org.cs533.newprocessor.simulator;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -24,6 +26,8 @@ import org.cs533.newprocessor.components.bus.AbstractBusMessage;
 import org.cs533.newprocessor.components.bus.CacheCoherenceBus;
 import org.cs533.newprocessor.components.core.ProcessorCore;
 import org.cs533.newprocessor.components.memorysubsystem.CacheController;
+import org.cs533.newprocessor.components.memorysubsystem.FireflyProtocol.FireflyBusMessage;
+import org.cs533.newprocessor.components.memorysubsystem.FireflyProtocol.FireflyCacheController;
 import org.cs533.newprocessor.components.memorysubsystem.MESIProtocol.MESIBusMessage;
 import org.cs533.newprocessor.components.memorysubsystem.MESIProtocol.MESICacheController;
 import org.cs533.newprocessor.components.memorysubsystem.MainMemory;
@@ -39,14 +43,110 @@ public class Simulator {
 
     static ArrayList<AsyncComponentInterface> components = new ArrayList<AsyncComponentInterface>();
     static Logger logger = Logger.getLogger(Simulator.class.getName());
-    static final HashMap<String, Integer> eventCounter = new HashMap<String, Integer>();
+    static HashMap<String, Integer> eventCounter = new HashMap<String, Integer>();
     public static Thread simulatorThread;
     public static boolean isRunning = false;
-    static final Object tickLock = new Object();
+    static Object tickLock = new Object();
     static boolean LAUNCH_GUI = false;
     static boolean TRACE = false;
+    static HashMap<String, Class[]> cacheTypes = new HashMap<String, Class[]>();
+
+
+    static {
+        cacheTypes.put("mesi", new Class[]{MESIBusMessage.class, MESICacheController.class});
+        cacheTypes.put("firefly", new Class[]{FireflyBusMessage.class, FireflyCacheController.class});
+    }
+
+    public static void resetSimulation() {
+        ArrayList<AsyncComponentInterface> components = new ArrayList<AsyncComponentInterface>();
+        logger = Logger.getLogger(Simulator.class.getName());
+        eventCounter = new HashMap<String, Integer>();
+        simulatorThread = null;
+        isRunning = false;
+        tickLock = new Object();
+        LAUNCH_GUI = false;
+        TRACE = false;
+    }
+
+    public static void runSimulations(String[] args) throws Exception {
+        Logger.getRootLogger().setLevel(Level.INFO);
+        Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
+        BasicConfigurator.configure();
+        System.out.println("RUNNING TESTS");
+        int i = 0;
+        String fileName = args[i++];
+        String asmFileName = new File(new File(System.getProperty("user.dir")).toURI().resolve("src/org/cs533/asm/" + fileName)).toString();
+        String csvFile = args[i++];
+        String cacheTypeString = args[i++];
+        Class[] cacheType = cacheTypes.get(cacheTypeString);
+        int minCacheLines = Integer.parseInt(args[i++]);
+        System.out.println("minCacheLines " + minCacheLines);
+        int maxCacheLines = Integer.parseInt(args[i++]);
+        System.out.print("maxCacheLines " + maxCacheLines);
+        int cacheLinesStep = Integer.parseInt(args[i++]);
+        System.out.println("cacheLinesStep " + cacheLinesStep);
+        int numDifferentThreadGroups = Integer.parseInt(args[i++]);
+        System.out.println("numDifferentThreadGroups " + numDifferentThreadGroups);
+        ArrayList<Integer[]> numProcessorsPerThread = new ArrayList<Integer[]>();
+        BufferedWriter bWrite = getCSVWriterWithColumns(csvFile,numDifferentThreadGroups);
+        for (int threadCount = 0; threadCount < numDifferentThreadGroups; threadCount++) {
+            String[] split = args[i++].split(",");
+            Integer[] toAdd = new Integer[split.length];
+            System.out.print("At threadCount " + threadCount + ": ");
+            for (int d = 0; d < split.length; d++) {
+                toAdd[d] = Integer.parseInt(split[d]);
+                System.out.print(toAdd[d] + " , ");
+            }
+            System.out.println();
+            numProcessorsPerThread.add(toAdd);
+        }
+        for (int numP = 0; numP < numProcessorsPerThread.size(); numP++) {
+            for (int numC = minCacheLines; numC <= maxCacheLines; numC += cacheLinesStep) {
+                resetSimulation();
+                Integer[] threadP = numProcessorsPerThread.get(numP);
+                Globals.setNumberOfLines(numC);
+                doTest(cacheType[0], cacheType[1], asmFileName, threadP);
+                        writeCSVFromSimulation(bWrite,threadP,numC);
+            }
+        }
+        bWrite.flush();
+        bWrite.close();
+    }
+
+    public static BufferedWriter getCSVWriterWithColumns(String outputFile,int numThreadGroups) throws Exception{
+        BufferedWriter bWrite = new BufferedWriter(new FileWriter(outputFile));
+        for(int i =0; i < numThreadGroups;i++) {
+            bWrite.write("num_processors_thread_group_"+i+",");
+        }
+        bWrite.write("cache_size,");
+        bWrite.write("clock_count,");
+        bWrite.write("prep_count,");
+        bWrite.write("cache_hit,");
+        bWrite.write("cache_miss,");
+        bWrite.write("bus message,");
+        bWrite.write("\n");
+        return bWrite;
+    }
+    public static void writeCSVFromSimulation(BufferedWriter bWrite, Integer[] threadPCount, int cacheSize) throws Exception {
+        for (int i = 0; i < threadPCount.length; i++) {
+            bWrite.write(threadPCount[i] + ",");
+        }
+        bWrite.write(cacheSize + ",");
+        bWrite.write(clockCount + ",");
+        bWrite.write(prepCount + ",");
+        bWrite.write(eventCounter.get("CacheController: Got Cache Hit") + ",");
+        bWrite.write(eventCounter.get("CacheController: Got Cache Miss") + ",");
+        System.out.println("MESSAGE FROM CLIENT IS " + eventCounter.get("CacheCoherenceBus: Got Message From Client"));
+        bWrite.write(eventCounter.get("CacheCoherenceBus: Got Message From Client")+"");
+        bWrite.write("\n");
+        bWrite.flush();
+    }
 
     public static void main(String[] args) throws Exception {
+        if (args.length > 1) {
+            runSimulations(args);
+            return;
+        }
         Logger.getRootLogger().setLevel(Level.INFO);
         // Logger.getLogger("CacheController").setLevel(Level.DEBUG);
         //    Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
@@ -57,8 +157,8 @@ public class Simulator {
         if (args.length > 0) {
             asmFileName = args[0];
         }
-        // doTest(FireflyBusMessage.class, FireflyCacheController.class, asmFileName);
-        doTest(MESIBusMessage.class, MESICacheController.class, asmFileName);
+// doTest(FireflyBusMessage.class, FireflyCacheController.class, asmFileName);
+        doTest(MESIBusMessage.class, MESICacheController.class, asmFileName, null);
     }
 
     public static void incrementClockTicks(int incrementBy) {
@@ -73,13 +173,15 @@ public class Simulator {
         }
     }
 
-    static <Msg extends AbstractBusMessage<Msg>, Cache extends CacheController<Msg>> void doTest(Class<Msg> _, Class<Cache> cache, String asmFileName) throws Exception {
+    static <Msg extends AbstractBusMessage<Msg>, Cache extends CacheController<Msg>> void doTest(Class<Msg> _, Class<Cache> cache, String asmFileName, Integer[] numProcessors) throws Exception {
         //   ExecutableImage exec = ExecutableImage.loadImageFromFile(imageFileName);
-        ExecutableImage exec = Assembler.getFullImage(asmFileName);
+
+        ExecutableImage exec = Assembler.getFullImage(asmFileName, numProcessors);
         MemoryInterface m = new MainMemory(exec.getMemoryImage());
         CacheCoherenceBus<Msg> bus = new CacheCoherenceBus<Msg>(m);
         int[] pcStart = exec.getInitialPC();
         ProcessorCore[] pCore = new ProcessorCore[pcStart.length];
+        System.out.println("RUNNING TEST WITH GUI = " + LAUNCH_GUI);
         for (int i = 0; i < pCore.length; i++) {
             Cache l1 = cache.getConstructor(int.class).newInstance(i);
             bus.registerClient(l1);
@@ -88,7 +190,9 @@ public class Simulator {
             }
             pCore[i] = new ProcessorCore(pcStart[i], l1, i);
             if (LAUNCH_GUI) {
-                MainSimulatorFrame.getFrameAndShow(pCore[i]).spawnUpdatingThread();
+                System.out.println("launching gui");
+                MainSimulatorFrame s = MainSimulatorFrame.getFrameAndShow(pCore[i]);
+                s.spawnUpdatingThread();
 
             }
         }
@@ -102,7 +206,9 @@ public class Simulator {
             }
             Thread.sleep(10);
         }
+        System.out.println("STOPPING SIM");
         stopSimulation();
+        System.out.println("PRINTING STATS");
         printStatistics();
     }
 
