@@ -5,6 +5,7 @@
 package org.cs533.newprocessor.components.memorysubsystem.MESIProtocol;
 
 import org.cs533.newprocessor.components.bus.CacheControllerState;
+import org.cs533.newprocessor.components.bus.Either;
 import org.cs533.newprocessor.components.bus.StateAnd;
 import org.cs533.newprocessor.components.memorysubsystem.CacheLine;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
@@ -29,6 +30,18 @@ public class MESIRunningState extends MESICacheControllerState {
         this.currentRound = currentRound;
         this.pendingRequest = pendingRequest;
         assert controller.dirtyWritebackAddr == -1;
+    }
+
+    protected final StateAnd<MESIBusMessage,CacheControllerState<MESIBusMessage>> handleClientRequestAsMessage(MemoryInstruction request, CacheLine<MESILineState> line) {
+        Either<MemoryInstruction,MESIBusMessage> result = handleClientRequest(request, line);
+        if (result.isFirst) {
+            // nack acts as transaction done, because it has null aggregator and request
+            return andJump(MESIBusMessage.Done(), new MESIDoneState(result.first, controller));
+        } else {
+            currentRound = result.second;
+            assert currentRound != null;
+            return noJump(result.second);
+        }
     }
 
     @Override

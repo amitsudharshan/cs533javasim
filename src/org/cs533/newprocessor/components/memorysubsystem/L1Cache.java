@@ -21,7 +21,7 @@ import org.cs533.newprocessor.simulator.Simulator;
  *
  *
  */
-public class L1Cache<BusMessage, LineStates, Protocol extends CoherenceProtocol<BusMessage, LineStates>>
+public class L1Cache<BusMessage, LineStates extends LineState, Protocol extends CoherenceProtocol<BusMessage, LineStates>>
         implements ComponentInterface, BusClient<BusMessage>, MemoryInterface,
         ProtocolContext<LineStates> {
 

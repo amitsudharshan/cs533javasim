@@ -29,7 +29,6 @@ public class FireflyRunningState extends FireflyCacheControllerState {
 
     @Override
     public StateAnd<FireflyBusMessage, CacheControllerState<FireflyBusMessage>> recieveMemoryResponse(MemoryInstruction response) {
-        logger.debug("recieveMemoryResponse("+response.toString()+","+currentRound.toString()+")");
         if (response.getType() == InstructionType.Load) {
             // must have been handling a Nack on a cache-to-cache get.
             assert response.getInAddress() == pendingRequest.getInAddress();
@@ -72,7 +71,6 @@ public class FireflyRunningState extends FireflyCacheControllerState {
 
     @Override
     public StateAnd<FireflyBusMessage, CacheControllerState<FireflyBusMessage>> receiveBusResponse(FireflyBusMessage b) {
-        logger.debug("recieveBusResponse("+b.toString()+","+currentRound.toString()+")");
         CacheLine<FireflyLineState> line;
         // must have been a cache to cache round requiring a response: Get or GetX
         switch (b.type) {
@@ -131,6 +129,16 @@ public class FireflyRunningState extends FireflyCacheControllerState {
             default:
                 logger.fatal("Unexpected bus response type " + b.type.toString());
                 throw new RuntimeException();
+        }
+    }
+        protected final StateAnd<FireflyBusMessage,CacheControllerState<FireflyBusMessage>> handleClientRequestAsMessage(MemoryInstruction request, CacheLine<FireflyLineState> line) {
+        Either<MemoryInstruction,FireflyBusMessage> result = handleClientRequest(request, line);
+        if (result.isFirst) {
+            // nack acts as transaction done, because it has null aggregator and request
+            return andJump(FireflyBusMessage.Done(), new FireflyDoneState(result.first, controller));
+        } else {
+            currentRound = result.second;
+            return andJump(result.second, new FireflyRunningState(result.second, pendingRequest, controller));
         }
     }
 }

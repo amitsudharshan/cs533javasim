@@ -8,6 +8,7 @@ import org.cs533.newprocessor.components.bus.CacheControllerState;
 import org.cs533.newprocessor.components.bus.Either;
 import org.cs533.newprocessor.components.bus.StateAnd;
 import org.cs533.newprocessor.components.memorysubsystem.CacheLine;
+import org.cs533.newprocessor.components.memorysubsystem.MESIProtocol.MESIBusMessage.MESIBusMessageType;
 import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
 
 /**
@@ -16,47 +17,46 @@ import org.cs533.newprocessor.components.memorysubsystem.MemoryInstruction;
  */
 public class MESIReadyState extends MESICacheControllerState {
 
-    final MESIBusMessage message;
-    final MemoryInstruction pendingRequest;
+    final MemoryInstruction request;
 
     @Override
     public String toString() {
-        return "MESIReadyState(" + message.toString() + "," + pendingRequest.toString() + ")";
+        return "MESIReadyState(" + request.toString() + ")";
     }
 
-    MESIReadyState(MESIBusMessage message, MemoryInstruction pendingRequest, MESICacheController controller) {
+    MESIReadyState(MemoryInstruction pendingRequest, MESICacheController controller) {
         super(controller);
-        assert message != null;
         assert pendingRequest != null;
-        this.message = message;
-        this.pendingRequest = pendingRequest;
+        this.request = pendingRequest;
     }
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> recieveBroadcastMessage(MESIBusMessage b) {
-        MESIBusMessage reply = handleBroadcastMessage(b);
-        if (b.address != pendingRequest.getInAddress()) {
-            return noJump(reply);
-        } else {
-            // it might change how we need to handle a request.
-            // In particular we could be ready to issue an Invalidate
-            // presuming the line is shared, but then have a bus
-            // message invalidate our line
-            CacheLine<MESILineState> line = controller.data.get(pendingRequest.getInAddress());
-            Either<MemoryInstruction, MESIBusMessage> newAction = handleClientRequest(pendingRequest, line);
-            if (newAction.isFirst) {
-                // somehow, we can finish the request right away
-                // (I don't think this is possible in MESI
-                return andJump(reply, new MESIDoneState(pendingRequest, controller));
-            } else {
-                // still need to wait, but perhaps with a different pending BusMessage
-                return andJump(reply, new MESIReadyState(newAction.second, pendingRequest, controller));
-            }
-        }
+        return noJump(handleBroadcastMessage(b));
     }
 
     @Override
     public StateAnd<MESIBusMessage, CacheControllerState<MESIBusMessage>> startTransaction() {
-        return andJump(message, new MESIRunningState(message, pendingRequest, controller));
+        // decide what our message actually should be
+        CacheLine<MESILineState> line = controller.data.get(request.getInAddress());
+        if (line == null) {
+            line = new CacheLine<MESILineState>(request.getInAddress(), null, MESILineState.INVALID);
+            CacheLine<MESILineState> evicted = controller.data.add(line);
+            if (evicted != null) {
+                MESIBusMessage message = MESIBusMessage.Writeback(evicted.address, evicted.data);
+                return andJump(message, new MESIRunningState(message, request, controller));
+            }
+        }
+        return handleClientRequestAsMessage(request, line);
+    }
+
+    protected final StateAnd<MESIBusMessage,CacheControllerState<MESIBusMessage>> handleClientRequestAsMessage(MemoryInstruction request, CacheLine<MESILineState> line) {
+        Either<MemoryInstruction,MESIBusMessage> result = handleClientRequest(request, line);
+        if (result.isFirst) {
+            // nack acts as transaction done, because it has null aggregator and request
+            return andJump(MESIBusMessage.Done(), new MESIDoneState(result.first, controller));
+        } else {
+            return andJump(result.second, new MESIRunningState(result.second, request, controller));
+        }
     }
 }

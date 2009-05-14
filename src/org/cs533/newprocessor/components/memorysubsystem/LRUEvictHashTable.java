@@ -23,30 +23,72 @@ public class LRUEvictHashTable<T extends CacheLine> {
         this.size = size;
     }
 
-    public T get(int address) {
+    public synchronized T get(int address) {
         return lines.get(address);
     }
 
-    public T reserveSpace(int address) {
-        if (lines.size() == size-1) {
-            Iterator<Entry<Integer,T>> iter = lines.entrySet().iterator();
-            Entry<Integer,T> removed = iter.next();
-            lines.remove(removed.getKey());
-            return removed.getValue();
+    /** Try to find and remove an evictable line
+     */
+    protected boolean silentEvict(int address) {
+       T evicted = null;
+        for (T line: lines.values()) {
+            if (line.silentlyEvictable() && line.address != address) {
+                evicted = line;
+                break;
+            }
+        }
+        if (evicted != null) {
+            lines.remove(evicted.address);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    protected T evict(int address) {
+        if (silentEvict(address)) {
+            return null;
+        }
+        for (T line: lines.values()) {
+            if (line.address != address) {
+                return line;
+            }
+        }
+        return null;
+    }
+
+    public synchronized T reserveSpace(int address) {
+        if (lines.size() >= size-1) {
+            return evict(address);
         } else {
             return null;
         }
     }
 
-    public T add(T newLine) {
+    /**
+     * Add a cache line to the hash table. Must not be a line already
+     * in the hash table. May return a line that needs
+     * to be evicted. You must call evictionCompleted once the eviction is
+     * done (line written back to memory, or passed to another cache),
+     * and must not call add again until the eviction is done.
+     * @param newLine
+     * @return An evicted line, or null
+     */
+    public synchronized T add(T newLine) {
+        assert !lines.containsKey(newLine.address);
         lines.put(newLine.address, newLine);
-        if (lines.size() == size+1) {
-            Iterator<Entry<Integer,T>> iter = lines.entrySet().iterator();
-            Entry<Integer,T> removed = iter.next();
-            iter.remove();
-            return removed.getValue();
-        } else {
-            return null;
+        return reserveSpace(newLine.address);
+    }
+
+    public synchronized boolean addNoEvict(T newLine) {
+        assert !lines.containsKey(newLine.address);
+        if (lines.size() >= size-1) {
+            // try to evict a silent line
+            if (!silentEvict(newLine.address)) {
+                return false;
+            }
         }
+        lines.put(newLine.address, newLine);
+        return true;
     }
 }

@@ -50,6 +50,7 @@ public class Simulator {
     static final boolean LAUNCH_GUI = false;
     static final boolean TRACE = false;
     static final HashMap<String, Class[]> cacheTypes = new HashMap<String, Class[]>();
+
     static {
         cacheTypes.put("mesi", new Class[]{MESIBusMessage.class, MESICacheController.class});
         cacheTypes.put("firefly", new Class[]{FireflyBusMessage.class, FireflyCacheController.class});
@@ -57,7 +58,6 @@ public class Simulator {
 
     public static void resetSimulation() {
         ArrayList<AsyncComponentInterface> components = new ArrayList<AsyncComponentInterface>();
-        logger = Logger.getLogger(Simulator.class.getName());
         eventCounter = new HashMap<String, Integer>();
         simulatorThread = null;
         isRunning = false;
@@ -67,9 +67,6 @@ public class Simulator {
     }
 
     public static void runSimulations(String[] args) throws Exception {
-        Logger.getRootLogger().setLevel(Level.INFO);
-        Logger.getLogger(ProcessorCore.class).setLevel(Level.INFO);
-        BasicConfigurator.configure();
         System.out.println("RUNNING TESTS");
         int i = 0;
         String fileName = args[i++];
@@ -101,6 +98,7 @@ public class Simulator {
         BufferedWriter bWrite = getCSVWriterWithColumns(csvFile,numProcessorsPerThread.get(0).length);
         for (int numP = 0; numP < numProcessorsPerThread.size(); numP++) {
             for (int numC = minCacheLines; numC <= maxCacheLines; numC += cacheLinesStep) {
+                System.out.println("Running test with numP = " + numP + " of " +numProcessorsPerThread.size() + " on cache " + numC + " with max = " + maxCacheLines + " and step = " + cacheLinesStep);
                 resetSimulation();
                 Integer[] threadP = numProcessorsPerThread.get(numP);
                 Globals.setNumberOfLines(numC);
@@ -122,7 +120,7 @@ public class Simulator {
         bWrite.write("prep_count,");
         bWrite.write("cache_hit,");
         bWrite.write("cache_miss,");
-        bWrite.write("bus message,");
+        bWrite.write("bus message");
         bWrite.write("\n");
         return bWrite;
     }
@@ -134,6 +132,7 @@ public class Simulator {
         bWrite.write(clockCount + ",");
         bWrite.write(prepCount + ",");
         bWrite.write(eventCounter.get("CacheController: Got Cache Hit") + ",");
+        System.out.println("Cache HIT IS" + eventCounter.get("CacheController: Got Cache Hit"));
         bWrite.write(eventCounter.get("CacheController: Got Cache Miss") + ",");
         System.out.println("MESSAGE FROM CLIENT IS " + eventCounter.get("CacheCoherenceBus: Got Message From Client"));
         bWrite.write(eventCounter.get("CacheCoherenceBus: Got Message From Client")+"");
@@ -142,15 +141,17 @@ public class Simulator {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length > 1) {
+        Logger.getRootLogger().setLevel(Level.INFO);
+        // Logger.getLogger("CacheController").setLevel(Level.DEBUG);
+        // Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
+        BasicConfigurator.configure();
+
+        if (args.length > 3) {
             runSimulations(args);
             return;
         }
-        Logger.getRootLogger().setLevel(Level.INFO);
-        // Logger.getLogger("CacheController").setLevel(Level.DEBUG);
-            Logger.getLogger(ProcessorCore.class).setLevel(Level.DEBUG);
-        BasicConfigurator.configure();
-        String example = "pmatrixmultiply.asm";
+
+        String example = "producerconsumerqueue.asm";
         String asmFileName = new File(new File(System.getProperty("user.dir")).toURI().resolve("src/org/cs533/asm/" + example)).toString();
         System.out.println(asmFileName);
         if (args.length > 0) {

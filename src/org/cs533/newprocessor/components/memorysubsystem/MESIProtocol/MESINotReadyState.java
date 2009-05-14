@@ -27,10 +27,8 @@ public class MESINotReadyState extends MESICacheControllerState {
         CacheLine<MESILineState> line = controller.data.get(request.getInAddress());
         if (line == null) {
             line = new CacheLine<MESILineState>(request.getInAddress(), null, MESILineState.INVALID);
-            CacheLine<MESILineState> evicted = controller.data.add(line);
-             if (evicted != null && evicted.state == MESILineState.MODIFIED) {
-                logger.debug("line evicted");
-                return jumpTo(new MESIReadyState(MESIBusMessage.Writeback(evicted.address, evicted.data), request, controller));
+            if (!controller.data.addNoEvict(line)) {
+                return jumpTo(new MESIReadyState(request, controller));
             }
         }
         return handleClientRequestAsMemory(request, line);

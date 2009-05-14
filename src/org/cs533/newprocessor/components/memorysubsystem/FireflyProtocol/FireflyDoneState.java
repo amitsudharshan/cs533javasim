@@ -23,14 +23,11 @@ public class FireflyDoneState extends FireflyCacheControllerState {
 
     @Override
     public StateAnd<FireflyBusMessage, CacheControllerState<FireflyBusMessage>> recieveBroadcastMessage(FireflyBusMessage b) {
-        logger.debug("recieveBroadcastMessage("+b+")");
-        StateAnd<FireflyBusMessage, CacheControllerState<FireflyBusMessage>> action = handleBroadcastMessage(b);
-        return action;
+        return noJump(handleBroadcastMessage(b));
     }
 
     @Override
     public StateAnd<MemoryInstruction, CacheControllerState<FireflyBusMessage>> pollRequestStatus(MemoryInstruction request) {
-        logger.debug("pollRequestStatus");
         return andJump(response, new FireflyNotReadyState(controller));
     }
 }
